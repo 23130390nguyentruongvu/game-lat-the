@@ -1,4 +1,4 @@
-package com.infix.gamelatthe;
+package com.infix.gamelatthe.ui.view;
 
 import android.os.Bundle;
 
@@ -8,11 +8,13 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
-import com.google.firebase.Firebase;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
+import com.infix.gamelatthe.R;
+import com.infix.gamelatthe.common.DifficultyEnum;
+import com.infix.gamelatthe.data.model.Card;
 
 import java.util.ArrayList;
 import java.util.Collections;

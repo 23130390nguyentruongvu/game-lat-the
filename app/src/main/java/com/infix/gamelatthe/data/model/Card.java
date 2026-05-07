@@ -1,4 +1,4 @@
-package com.infix.gamelatthe;
+package com.infix.gamelatthe.data.model;
 
 public class Card {
     private int id;
