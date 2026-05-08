@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
@@ -15,6 +16,7 @@ import com.google.firebase.firestore.WriteBatch;
 import com.infix.gamelatthe.R;
 import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.data.model.Card;
+import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    private BoardGameViewModel boardGameViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

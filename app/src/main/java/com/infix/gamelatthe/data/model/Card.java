@@ -49,7 +49,7 @@ public class Card {
     public boolean equals(Object o) {
         if (!(o instanceof Card)) return false;
         Card card = (Card) o;
-        return getId() == card.getId() && getGroupId() == card.getGroupId() && isFlipped() == card.isFlipped() && Objects.equals(getUrlImage(), card.getUrlImage());
+        return getId() == card.getId();
     }
 
     @Override
