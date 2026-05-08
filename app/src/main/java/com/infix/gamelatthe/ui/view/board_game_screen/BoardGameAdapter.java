@@ -29,12 +29,15 @@ public class BoardGameAdapter extends RecyclerView.Adapter<BoardGameAdapter.View
         }
 
         public void onBind(Card card) {
+            String url = card.isFlipped()?card.getUrlImage():"https://www.emojiall.com/images/60/skype/2753.png";
+
             Glide.with(binding.getRoot())
-                    .load(card.getUrlImage())
+                    .load(url)
                     .error(R.drawable.error_network)
                     .centerCrop()
                     .into(binding.imgCardItem);
 
+            //2.1.1 Người chơi chọn một thẻ trên giao diện
             binding.getRoot().setOnClickListener(v->onCardClick.onCardClick(card));
         }
     }
@@ -91,11 +94,16 @@ public class BoardGameAdapter extends RecyclerView.Adapter<BoardGameAdapter.View
     }
 
     @SuppressLint("NotifyDataSetChanged")
-    public void flipBackCards() {
-        cards.stream().forEach(card -> {
-            card.setFlipped(false);
-        });
+    public void flipBackTwoCard(Card card1, Card card2) {
+        card1.setFlipped(false);
+        card2.setFlipped(false);
 
-        notifyItemRangeChanged(0, cards.size());
+        int index1 = cards.indexOf(card1);
+        int index2 = cards.indexOf(card2);
+
+        if(index1 != -1)
+            notifyItemChanged(index1);
+        if(index2 != -1)
+            notifyItemChanged(index2);
     }
 }
