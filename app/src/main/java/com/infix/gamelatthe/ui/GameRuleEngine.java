@@ -6,6 +6,10 @@ import com.infix.gamelatthe.data.model.Card;
 public class GameRuleEngine {
     private BoardGame boardGame;
 
+    public GameRuleEngine(BoardGame boardGame) {
+        this.boardGame = boardGame;
+    }
+
     public boolean matchTwoCard(Card card1, Card card2){
         return  false;
     }

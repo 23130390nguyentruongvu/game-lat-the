@@ -9,8 +9,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.infix.gamelatthe.R;
+import com.infix.gamelatthe.databinding.FragmentBoardGameBinding;
+import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
 
 public class BoardGameFragment extends Fragment {
+    private FragmentBoardGameBinding binding;
+    private BoardGameAdapter boardGameAdapter;
+    private BoardGameViewModel boardGameViewModel;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {

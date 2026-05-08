@@ -9,8 +9,14 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.infix.gamelatthe.R;
+import com.infix.gamelatthe.databinding.FragmentHomeBinding;
+import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
+import com.infix.gamelatthe.ui.viewmodel.HomeViewModel;
 
 public class HomeFragment extends Fragment {
+    private FragmentHomeBinding binding;
+    private BoardGameViewModel boardGameViewModel;
+    private HomeViewModel homeViewModel;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
