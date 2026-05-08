@@ -67,7 +67,9 @@ public class BoardGameFragment extends Fragment {
                 }
                 case MATCH:
                     break;
+                //2.3.2 View quan sát nhận được trạng thái lỗi và hiển thị
                 case CHOOSE_DUPLICATE: {
+                    showMessage("Thẻ chọn bị trùng");
                     break;
                 }
                 //2.2.5 View nhận trạng thái và thực hiện úp lại hai thẻ trên giao diện
@@ -95,7 +97,6 @@ public class BoardGameFragment extends Fragment {
     }
 
     private void observeNotifyMessage() {
-        //2.3.2 View quan sát nhận được trạng thái lỗi và hiển thị
         boardGameViewModel.notifyMessage.observe(getViewLifecycleOwner(), this::showMessage);
     }
 
