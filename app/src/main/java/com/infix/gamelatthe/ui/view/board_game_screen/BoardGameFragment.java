@@ -105,8 +105,12 @@ public class BoardGameFragment extends Fragment {
                 //2.1.10 View nhận được thông báo và update disable 2 card
                 case DISABLE_TWO_CARD_NOW: {
                     boardGameAdapter.disableTwoCard(boardGameViewModel.getFirstCard(), boardGameViewModel.getSecondCard());
+                    // 3.1.9 View quan sát trạng thái và kiểm tra nếu ván kết thúc
+                    if (boardGameAdapter.areAllCardsDisabled()) {
+                    }
                     break;
                 }
+
             }
         });
     }
