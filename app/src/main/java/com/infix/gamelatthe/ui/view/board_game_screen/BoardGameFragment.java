@@ -16,6 +16,8 @@ import com.google.android.material.snackbar.Snackbar;
 import com.infix.gamelatthe.R;
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
+import com.infix.gamelatthe.data.repository.HistoryRepository;
+import com.infix.gamelatthe.data.source.local.MyDatabase;
 import com.infix.gamelatthe.databinding.FragmentBoardGameBinding;
 import com.infix.gamelatthe.ui.view.MainActivity;
 import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
@@ -53,12 +55,10 @@ public class BoardGameFragment extends Fragment {
     private void initBoardGameViewModel() {
         boardGameViewModel = new ViewModelProvider(requireActivity()).get(BoardGameViewModel.class);
 
-        com.infix.gamelatthe.data.source.local.MyDatabase db =
-                androidx.room.Room.databaseBuilder(requireContext(),
-                        com.infix.gamelatthe.data.source.local.MyDatabase.class, "game_database").build();
+        MyDatabase db =MyDatabase.getInstance(binding.getRoot().getContext());
 
-        com.infix.gamelatthe.data.repository.HistoryRepository repo =
-                new com.infix.gamelatthe.data.repository.HistoryRepository(db.playHistoryDao());
+       HistoryRepository repo =
+                new HistoryRepository(db.playHistoryDao());
 
         boardGameViewModel.setRepository(repo);
 
