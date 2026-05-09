@@ -14,4 +14,22 @@ public class BoardGame {
     public List<Card> getCards() {
         return cards;
     }
+
+    // 3.1.3 Kiểm tra trạng thái tất cả các thẻ
+    public boolean checkAllCardFlipped() {
+        for (Card card : cards) {
+            if (!card.isFlipped()) {
+                return false;
+            }
+        }
+        return true;
+    }
+    // 3.1.5 Tính thời gian hoàn thành
+    public long calcTimeFinish() {
+        return timeEnd - timeInit;
+    }
+
+    public void setTimeEnd(Long timeEnd) {
+        this.timeEnd = timeEnd;
+    }
 }
