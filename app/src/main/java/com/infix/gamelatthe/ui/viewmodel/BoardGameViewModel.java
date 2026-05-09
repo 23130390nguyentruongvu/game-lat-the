@@ -128,6 +128,31 @@ public class BoardGameViewModel extends ViewModel {
             resetSelection();
         }
     }
+    // 3.1.1 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
+    public void checkEndGame(){
+        //3.1.3 GameRuleEngie kiểm tra trạng thái tất cả các thẻ
+        if(gameRuleEngine.checkEndGame()){
+            // 3.1.5 Tính toán thời gian hoàn thành
+            long finishTime = gameRuleEngine.calcTimeFinish();
+            // 3.1.7 Kích hoạt UC4
+            onGameEnded(
+
+            )
+            //3.1.8 Cập nhật thông báo kết thúc
+            _notifyMessage.setValue("Game Finished");
+        }
+        else{
+            handleGameNotFinished();
+        }
+    }
+
+    // UC3.2.3: Cập nhật trạng thái tiếp tục trò chơi
+    private void handleGameNotFinished() {
+        _notifyMessage.setValue("Continue Game");
+        // UC3.2.4: View sẽ quan sát và giữ nguyên giao diện bàn chơi
+        // UC3.2.5: ViewModel tiếp tục chờ tương tác từ người chơi (UC-2)
+    }
+
 
     private void updateStateFlipCard(TrackStateFlipTwoCard state) {
         _stateFlipTwoCard.setValue(state);
