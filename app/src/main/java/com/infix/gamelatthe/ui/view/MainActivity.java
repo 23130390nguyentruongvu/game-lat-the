@@ -16,6 +16,7 @@ import com.google.firebase.firestore.WriteBatch;
 import com.infix.gamelatthe.R;
 import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.data.model.Card;
+import com.infix.gamelatthe.data.source.local.MyDatabase;
 import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
+        MyDatabase.getInstance(this);
       //  initDataForFirestore();
     }
 
