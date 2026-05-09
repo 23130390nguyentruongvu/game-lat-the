@@ -34,4 +34,8 @@ public class GameRuleEngine {
     public List<Card> getCards() {
         return boardGame.getCards();
     }
+
+    public BoardGame getBoardGame() {
+        return boardGame;
+    }
 }

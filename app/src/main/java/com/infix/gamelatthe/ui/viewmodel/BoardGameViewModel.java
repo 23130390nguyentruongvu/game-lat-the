@@ -130,31 +130,25 @@ public class BoardGameViewModel extends ViewModel {
         }
     }
     // 3.1.1 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
-    public void checkEndGame(){
-        //3.1.3 GameRuleEngie kiểm tra trạng thái tất cả các thẻ
-        if(gameRuleEngine.checkEndGame()){
-            // 3.1.5 Tính toán thời gian hoàn thành
-            long finishTime = gameRuleEngine.calcTimeFinish();
-            // 3.1.7 Kích hoạt UC4
-            onGameEnded(
+    private void checkEndGame() {
+        boolean isFinished = gameRuleEngine.checkEndGame();
 
-            )
-            //3.1.8 Cập nhật thông báo kết thúc
-            _notifyMessage.setValue("Game Finished");
-        }
-        else{
-            handleGameNotFinished();
+        if (isFinished) {
+            // 3.1.5 Ghi nhận thời gian kết thúc (BoardGame sẽ lưu)
+            long currentTime = System.currentTimeMillis();
+            gameRuleEngine.trackEndTime(currentTime);
+
+            // 3.1.7 Kích hoạt UC-4: Gọi onGameEnded() để lưu kết quả
+            onGameEnded(gameConfig.getPlayerName(), gameConfig.getDifficulty(),
+                    gameRuleEngine.getBoardGame().getTimeInit(), gameRuleEngine.getBoardGame().getTimeEnd());
+
+            // 3.1.8 ViewModel cập nhật thông báo kết thúc
+            _notifyMessage.setValue("Hoàn thành!");
+            resetSelection();
+        } else {
+            resetSelection();
         }
     }
-
-    // UC3.2.3: Cập nhật trạng thái tiếp tục trò chơi
-    private void handleGameNotFinished() {
-        _notifyMessage.setValue("Continue Game");
-        // UC3.2.4: View sẽ quan sát và giữ nguyên giao diện bàn chơi
-        // UC3.2.5: ViewModel tiếp tục chờ tương tác từ người chơi (UC-2)
-    }
-
-
     private void updateStateFlipCard(TrackStateFlipTwoCard state) {
         _stateFlipTwoCard.setValue(state);
     }

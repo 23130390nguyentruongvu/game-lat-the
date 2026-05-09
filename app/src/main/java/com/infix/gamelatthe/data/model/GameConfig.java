@@ -8,4 +8,12 @@ public class GameConfig {
         this.playerName = playerName;
         this.difficulty = difficulty;
     }
+
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public String getDifficulty() {
+        return difficulty;
+    }
 }

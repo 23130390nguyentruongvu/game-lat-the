@@ -20,6 +20,15 @@ public class BoardGameAdapter extends RecyclerView.Adapter<BoardGameAdapter.View
     private OnCardClick onCardClick;
     private List<Card> cards = new ArrayList<>();
 
+    public boolean areAllCardsDisabled() {
+        for (Card card : cards) {
+            if (card.isEnable()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     class ViewHolder extends RecyclerView.ViewHolder {
         private final ItemCardBinding binding;
 
