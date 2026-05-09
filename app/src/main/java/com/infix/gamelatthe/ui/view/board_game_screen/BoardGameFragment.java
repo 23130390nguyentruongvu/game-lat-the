@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.infix.gamelatthe.R;
@@ -20,9 +21,15 @@ import com.infix.gamelatthe.ui.view.MainActivity;
 import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
 
 public class BoardGameFragment extends Fragment {
+
     private FragmentBoardGameBinding binding;
     private BoardGameAdapter boardGameAdapter;
     private BoardGameViewModel boardGameViewModel;
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+    }
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
@@ -40,10 +47,21 @@ public class BoardGameFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         initBoardGameViewModel();
         initRecyclerView();
+        observeErrorEvent();
     }
 
     private void initBoardGameViewModel() {
         boardGameViewModel = new ViewModelProvider(requireActivity()).get(BoardGameViewModel.class);
+
+        com.infix.gamelatthe.data.source.local.MyDatabase db =
+                androidx.room.Room.databaseBuilder(requireContext(),
+                        com.infix.gamelatthe.data.source.local.MyDatabase.class, "game_database").build();
+
+        com.infix.gamelatthe.data.repository.HistoryRepository repo =
+                new com.infix.gamelatthe.data.repository.HistoryRepository(db.playHistoryDao());
+
+        boardGameViewModel.setRepository(repo);
+
         observeStateFlipTwoCard();
         observeNotifyMessage();
     }
@@ -58,7 +76,6 @@ public class BoardGameFragment extends Fragment {
     }
 
     private void observeStateFlipTwoCard() {
-
         boardGameViewModel.stateFlipTwoCard.observe(getViewLifecycleOwner(), state -> {
             switch (state.getState()) {
                 //2.2.2 View nhận được thông báo và cập nhật thông báo không khớp
@@ -83,7 +100,6 @@ public class BoardGameFragment extends Fragment {
                             :boardGameViewModel.getSecondCard();
                     card.setFlipped(true);
                     boardGameAdapter.updateItemCard(card);
-
                     break;
                 }
                 //2.1.10 View nhận được thông báo và update disable 2 card
@@ -102,5 +118,20 @@ public class BoardGameFragment extends Fragment {
 
     private void showMessage(String msg) {
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
+    }
+
+    private void observeErrorEvent() {
+        if (boardGameViewModel != null) {
+            boardGameViewModel.errorEvent.observe(getViewLifecycleOwner(), errorMessage -> {
+                if (errorMessage != null && !errorMessage.isEmpty()) {
+                    // Bước 4.2.3 & 4.3.3: View nhận thông báo từ LiveData và hiển thị Toast
+                    showToast(errorMessage);
+                }
+            });
+        }
+    }
+
+    private void showToast(String message) {
+        Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
     }
 }

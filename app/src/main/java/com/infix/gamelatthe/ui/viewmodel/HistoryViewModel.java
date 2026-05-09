@@ -11,7 +11,7 @@ import com.infix.gamelatthe.data.repository.HistoryRepository;
 import java.util.List;
 
 public class HistoryViewModel extends ViewModel {
-    private HistoryRepository repository = new HistoryRepository();
+    private HistoryRepository repository;
     private MutableLiveData<UIState> _uiState = new MutableLiveData<>();
     public LiveData<UIState> uiState = _uiState;
 
@@ -20,4 +20,7 @@ public class HistoryViewModel extends ViewModel {
 
     private MutableLiveData<String> _errorMessage= new MutableLiveData<>();
     public LiveData<String> errorMessage = _errorMessage;
+    public void setRepository(HistoryRepository repo) {
+        this.repository = repo;
+    }
 }
