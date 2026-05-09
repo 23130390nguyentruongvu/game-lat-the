@@ -33,13 +33,16 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    buildFeatures {
-        viewBinding = true
-    }
+    buildFeatures { viewBinding = true }
 }
 
 dependencies {
+    implementation(libs.glide)
+
     implementation(libs.room.runtime)
+    implementation(libs.fragment)
+    implementation(libs.cardview)
+    implementation(libs.recyclerview)
     testImplementation(libs.room.testing)
     annotationProcessor(libs.room.compiler)
 

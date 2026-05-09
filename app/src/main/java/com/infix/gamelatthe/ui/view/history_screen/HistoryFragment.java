@@ -9,8 +9,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.infix.gamelatthe.R;
+import com.infix.gamelatthe.databinding.FragmentHistoryBinding;
+import com.infix.gamelatthe.ui.viewmodel.HistoryViewModel;
 
 public class HistoryFragment extends Fragment {
+    private FragmentHistoryBinding binding;
+    private HistoryViewModel viewModel;
+    private HistoryAdapter historyAdapter;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
