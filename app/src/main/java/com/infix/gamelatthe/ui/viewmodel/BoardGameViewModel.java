@@ -149,8 +149,8 @@ public class BoardGameViewModel extends ViewModel {
                     gameRuleEngine.getBoardGame().getTimeInit(), gameRuleEngine.getBoardGame().getTimeEnd());
 
             // 3.1.8 ViewModel cập nhật thông báo kết thúc
-            long second = (gameRuleEngine.getBoardGame().getTimeEnd() - gameRuleEngine.getBoardGame().getTimeInit())/1000;
-            _notifyMessage.setValue("Hoàn thành với thời gian: " + second + "s");
+            long second = ( gameRuleEngine.getBoardGame().getTimeEnd()-gameRuleEngine.getBoardGame().getTimeInit())/1000;
+            _notifyMessage.setValue("Hoàn thành ván game với thời gian chơi là " + second + "s");
             return true;
         } else {
             return false;
