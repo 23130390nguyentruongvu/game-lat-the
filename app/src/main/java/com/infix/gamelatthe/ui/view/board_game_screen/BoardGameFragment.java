@@ -59,9 +59,7 @@ public class BoardGameFragment extends Fragment {
 
     @Override
     public void onStop() {
-        homeViewModel.setLevelList(null);
-        homeViewModel.setConfigState(null);
-        homeViewModel.setBoardGameState(null);
+        homeViewModel.resetAllState();
         super.onStop();
     }
 
@@ -93,6 +91,8 @@ public class BoardGameFragment extends Fragment {
 
     private void observeStateFlipTwoCard() {
         boardGameViewModel.stateFlipTwoCard.observe(getViewLifecycleOwner(), state -> {
+            if(state == null) return;
+
             switch (state.getState()) {
                 //2.2.2 View nhận được thông báo và cập nhật thông báo không khớp
                 case NOT_MATCH: {
@@ -135,6 +135,7 @@ public class BoardGameFragment extends Fragment {
     }
 
     private void showMessage(String msg) {
+        if (msg == null) return;
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
     }
 

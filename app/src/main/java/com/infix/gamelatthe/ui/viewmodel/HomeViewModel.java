@@ -126,6 +126,12 @@ public class HomeViewModel extends ViewModel {
         _gameConfigState.setValue(config);
     }
 
+    public void resetAllState() {
+        this.setLevelList(null);
+        this.setConfigState(null);
+        this.setBoardGameState(null);
+    }
+
     public void setBoardGameState(BoardGame boardGameState) {
         _boardGameState.setValue(boardGameState);
     }
