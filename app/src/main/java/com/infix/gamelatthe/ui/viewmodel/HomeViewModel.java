@@ -2,6 +2,7 @@ package com.infix.gamelatthe.ui.viewmodel;
 
 import android.content.Context;
 
+import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
@@ -13,6 +14,7 @@ import com.infix.gamelatthe.data.repository.GameRepository;
 import com.infix.gamelatthe.data.source.remote.RemoteDataSource;
 import com.infix.gamelatthe.utils.NetworkUtils;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -22,11 +24,17 @@ public class HomeViewModel extends ViewModel {
     private GameConfig config;
     private GameConfig currentConfig;
 
-    public MutableLiveData<GameConfig> gameConfigState =
-            new MutableLiveData<>();
-    public MutableLiveData<List<String>> levelList = new MutableLiveData<>();
-    public MutableLiveData<String> errorState = new MutableLiveData<>();
-    public MutableLiveData<BoardGame> boardGameState = new MutableLiveData<>();
+    private MutableLiveData<List<String>> _levelList = new MutableLiveData<>();
+    public LiveData<List<String>> levelList = _levelList;
+
+    private MutableLiveData<GameConfig> _gameConfigState = new MutableLiveData<>();
+    public LiveData<GameConfig> gameConfigState = _gameConfigState;
+
+    private MutableLiveData<String> _errorState = new MutableLiveData<>();
+    public LiveData<String> errorState = _errorState;
+
+    private MutableLiveData<BoardGame> _boardGameState = new MutableLiveData<>();
+    public LiveData<BoardGame> boardGameState = _boardGameState;
 
     private Context context;
 
@@ -34,30 +42,38 @@ public class HomeViewModel extends ViewModel {
         this.context = context;
     }
 
-    // 1. START GAME CLICK
-
     public void onStartGameClicked() {
-
-        // CHECK NETWORK
+        //-	1.1.3 ViewModel gọi NetworkUtils để kiểm tra trạng thái kết nối mạng của thiết bị
         if (!NetworkUtils.isNetworkAvailable(context)) {
-            errorState.setValue("No Internet Connection");
+            //(Rẽ nhánh từ 1.1.3) Nếu thiết bị người dùng không có kết nối mạng
+            //-	1.4.1 ViewModel cập nhật trạng thái lỗi không có mạng
+            _errorState.setValue("No Internet Connection");
+            //-	1.4.3 ViewModel dừng các logic bên dưới và quay lại bước 1.1.1
             return;
         }
 
-        // LOAD LEVELS
+        //-	1.1.4 ViewModel gọi đến Repository/Source để lấy thông tin về các cấp độ chơi
         repository.getLevels(new RemoteDataSource.LevelsCallback() {
             @Override
+
             public void onSuccess(List<String> levels) {
+                //    (Rẽ nhánh từ 1.1.5) Không có dữ liệu cấp độ
                 if (levels == null || levels.isEmpty()) {
-                    errorState.setValue("No levels available");
+                    _errorState.setValue("No levels available");
+                    //-	1.2.1 ViewModel nhận danh sách cấp độ rỗng
+                    //-	1.2.2 ViewModel cập nhật trạng thái dữ liệu rỗng
+                    _levelList.setValue(new ArrayList<>());
+                    //-	1.2.4 Quay lại bước 1.1.1
+
                 } else {
-                    levelList.setValue(levels);
+                    //-	1.1.5 ViewModel nhận được dữ liệu và danh sách các cấp độ cho View xử lí
+                    _levelList.setValue(levels);
                 }
             }
 
             @Override
             public void onError(String error) {
-                errorState.setValue(error);
+                _errorState.setValue(error);
             }
         });
     }
@@ -86,7 +102,7 @@ public class HomeViewModel extends ViewModel {
             public void onSuccess(List<Card> cards) {
 
                 if (cards == null || cards.isEmpty()) {
-                    errorState.setValue("No cards found");
+                    _errorState.setValue("No cards found");
                     return;
                 }
 
@@ -100,12 +116,12 @@ public class HomeViewModel extends ViewModel {
                 );
 
                 // UC-1 STEP 1.1.11
-                boardGameState.setValue(game);
+                _boardGameState.setValue(game);
             }
 
             @Override
             public void onError(String error) {
-                errorState.setValue(error);
+                _errorState.setValue(error);
             }
         });
     }
@@ -113,17 +129,41 @@ public class HomeViewModel extends ViewModel {
     // UC1 START GAME
     public void startGame(String playerName,
                           DifficultyEnum difficulty) {
+        //-	1.1.8 Nếu tên người chơi là null hoặc rỗng
+        //o	thiết lập tên mặc định người chơi là “User1”
+        if(playerName== null||playerName.isEmpty()) {
+            playerName = "User1";
+        }
 
+        //-	1.1.9 ViewModel tiến hành lưu lại các thông tin cấu hình của người chơi vào một đối tượng
         GameConfig config =
                 new GameConfig(
                         playerName,
                         difficulty
                 );
 
+        //-	1.1.10 ViewModel lấy ra cấp độ đã chọn để dùng Repository/Source lấy ra board game tương ứng
+        repository.getBoard(difficulty, new RemoteDataSource.BoardCallback() {
+            @Override
+            public void onSuccess(List<Card> cards) {
+                //-	1.1.11 ViewModel nhận được dữ liệu board game, gửi thông báo đến View
+                BoardGame boardGame = new BoardGame(
+                        cards,
+                        System.currentTimeMillis()
+                );
+                _boardGameState.setValue(boardGame);
+            }
+
+            @Override
+            public void onError(String error) {
+
+            }
+        });
+
         // VALIDATION
         if (!config.isValid()) {
 
-            errorState.setValue(
+            _errorState.setValue(
                     "Invalid game config"
             );
 
@@ -132,6 +172,6 @@ public class HomeViewModel extends ViewModel {
 
         currentConfig = config;
 
-        gameConfigState.setValue(config);
+        _gameConfigState.setValue(config);
     }
 }

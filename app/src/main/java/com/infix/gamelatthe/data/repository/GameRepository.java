@@ -7,12 +7,10 @@ public class GameRepository {
 
     private final RemoteDataSource remoteDataSource = new RemoteDataSource();
 
-    // UC-1: lấy danh sách level
     public void getLevels(RemoteDataSource.LevelsCallback callback) {
         remoteDataSource.getLevels(callback);
     }
 
-    // UC-1: lấy board/cards theo level đã chọn
     public void getBoard(DifficultyEnum level,
                          RemoteDataSource.BoardCallback callback) {
         remoteDataSource.getBoard(level, callback);

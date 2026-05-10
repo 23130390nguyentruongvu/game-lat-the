@@ -39,30 +39,11 @@ public class BoardGameViewModel extends ViewModel {
     private final MutableLiveData<String> _error = new MutableLiveData<>();
     public LiveData<String> error = _error;
 
-
-    // UC1.6.2 nhận config từ Home
     public void setGameConfig(GameConfig config) {
         if (config == null) return;
-
         this.gameConfig = config;
-
-        // UC1.1 init BoardGame (FIX: có constructor rỗng)
-        BoardGame boardGame = new BoardGame();
-
-        // UC1.2 set start time
-        boardGame.setTimeInit(System.currentTimeMillis());
-
-        // UC1.3 init engine
-        gameRuleEngine = new GameRuleEngine(boardGame);
-
-        // UC1.4 load level
-        loadLevel(config.getDifficulty());
     }
-    // UC1.1.4 - load level (FIX ERROR)
-    private void loadLevel(Object difficulty) {
-        // TODO: sau này connect Firestore
-        _error.setValue("Load level: " + difficulty.toString());
-    }
+
     public BoardGameViewModel() {
         handler = new Handler(Looper.getMainLooper());
     }
