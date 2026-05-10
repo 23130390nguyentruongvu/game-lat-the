@@ -21,6 +21,7 @@ import com.infix.gamelatthe.R;
 import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.databinding.FragmentHomeBinding;
 import com.infix.gamelatthe.ui.view.board_game_screen.BoardGameFragment;
+import com.infix.gamelatthe.ui.view.history_screen.HistoryFragment;
 import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
 import com.infix.gamelatthe.ui.viewmodel.HomeViewModel;
 
@@ -65,6 +66,10 @@ public class HomeFragment extends Fragment {
             showMessage("Đạng kiểm tra mạng");
                 homeViewModel.onStartGameClicked();
         });
+
+        binding.btnHistory.setOnClickListener(v -> {
+            goToHistoryFragment();
+        });
     }
 
     private void initViewModels() {
@@ -105,6 +110,13 @@ public class HomeFragment extends Fragment {
     private void goToBoardGameFragment() {
         FragmentTransaction transaction= requireActivity().getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fcv_main, new BoardGameFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private void goToHistoryFragment() {
+        FragmentTransaction transaction= requireActivity().getSupportFragmentManager().beginTransaction();
+        transaction.replace(R.id.fcv_main, new HistoryFragment())
                 .addToBackStack(null)
                 .commit();
     }
