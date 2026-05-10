@@ -1,5 +1,6 @@
 [versions]
 agp = "9.0.1"
+coreTesting = "2.2.0"
 firebaseBom = "34.12.0"
 glide = "4.1.6"
 glideVersion = "5.0.5"
@@ -18,6 +19,7 @@ cardview = "1.0.0"
 recyclerview = "1.4.0"
 
 [libraries]
+core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTesting" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glideVersion" }
