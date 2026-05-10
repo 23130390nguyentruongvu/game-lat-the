@@ -3,6 +3,7 @@ package com.infix.gamelatthe.ui.view.home_screen;
 import android.app.Dialog;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -60,6 +61,8 @@ public class HomeFragment extends Fragment {
     private void initEvents() {
         //-	1.1.2 Người chơi nhấn nút “Start game” trên View. View gửi sự kiện này đến ViewModel.
         binding.btnStartGame.setOnClickListener(v -> {
+            Log.d("SVU", "1.1.2");
+            showMessage("Đạng kiểm tra mạng");
                 homeViewModel.onStartGameClicked();
         });
     }
@@ -76,8 +79,9 @@ public class HomeFragment extends Fragment {
         homeViewModel.errorState.observe(getViewLifecycleOwner(), this::showMessage);
 
         homeViewModel.levelList.observe(getViewLifecycleOwner(), levels -> {
+            if (levels == null) return;
             //-	1.2.3 View nhận trạng thái và hiển thị thông báo "Không có cấp độ khả dụng"
-            if(levels == null || levels.isEmpty()) {
+            if(levels.isEmpty()) {
                 showMessage("Không có cấp độ khả dụng");
                 return;
             }
@@ -86,6 +90,7 @@ public class HomeFragment extends Fragment {
         });
 
         homeViewModel.boardGameState.observe(getViewLifecycleOwner(), boardGame -> {
+            if(boardGame == null) return;
             //-	1.1.12 View nhận được thông báo về board game tiến hành gọi ra màn hình chuyên xử lí board game đó
             boardGameViewModel.setGameConfig(homeViewModel.gameConfigState.getValue());
             boardGameViewModel.setBoardGame(boardGame);
@@ -117,7 +122,7 @@ public class HomeFragment extends Fragment {
 
         Dialog dialog = new Dialog(requireContext());
         dialog.setContentView(R.layout.fragment_setupgame);
-        dialog.setCancelable(false);
+        dialog.setCancelable(true);
 
         EditText edtPlayerName =
                 dialog.findViewById(R.id.edtPlayerName);

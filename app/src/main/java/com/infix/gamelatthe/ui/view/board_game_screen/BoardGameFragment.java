@@ -21,9 +21,10 @@ import com.infix.gamelatthe.data.source.local.MyDatabase;
 import com.infix.gamelatthe.databinding.FragmentBoardGameBinding;
 import com.infix.gamelatthe.ui.view.MainActivity;
 import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
+import com.infix.gamelatthe.ui.viewmodel.HomeViewModel;
 
 public class BoardGameFragment extends Fragment {
-
+    private HomeViewModel homeViewModel;
     private FragmentBoardGameBinding binding;
     private BoardGameAdapter boardGameAdapter;
     private BoardGameViewModel boardGameViewModel;
@@ -48,8 +49,20 @@ public class BoardGameFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         initBoardGameViewModel();
+        initHomeViewModel();
         initRecyclerView();
         observeErrorEvent();
+
+        binding.btnBack.setOnClickListener(v ->
+                requireActivity().getSupportFragmentManager().popBackStack());
+    }
+
+    @Override
+    public void onStop() {
+        homeViewModel.setLevelList(null);
+        homeViewModel.setConfigState(null);
+        homeViewModel.setBoardGameState(null);
+        super.onStop();
     }
 
     private void initBoardGameViewModel() {
@@ -64,6 +77,9 @@ public class BoardGameFragment extends Fragment {
 
         observeStateFlipTwoCard();
         observeNotifyMessage();
+    }
+    private void initHomeViewModel() {
+        homeViewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
     }
 
     private void initRecyclerView() {

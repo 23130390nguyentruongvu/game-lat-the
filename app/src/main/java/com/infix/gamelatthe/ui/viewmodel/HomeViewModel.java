@@ -1,6 +1,7 @@
 package com.infix.gamelatthe.ui.viewmodel;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -15,7 +16,6 @@ import com.infix.gamelatthe.data.source.remote.RemoteDataSource;
 import com.infix.gamelatthe.utils.NetworkUtils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class HomeViewModel extends ViewModel {
@@ -24,16 +24,16 @@ public class HomeViewModel extends ViewModel {
     private GameConfig config;
     private GameConfig currentConfig;
 
-    private MutableLiveData<List<String>> _levelList = new MutableLiveData<>();
+    private final MutableLiveData<List<String>> _levelList = new MutableLiveData<>();
     public LiveData<List<String>> levelList = _levelList;
 
-    private MutableLiveData<GameConfig> _gameConfigState = new MutableLiveData<>();
+    private final MutableLiveData<GameConfig> _gameConfigState = new MutableLiveData<>();
     public LiveData<GameConfig> gameConfigState = _gameConfigState;
 
-    private MutableLiveData<String> _errorState = new MutableLiveData<>();
+    private final MutableLiveData<String> _errorState = new MutableLiveData<>();
     public LiveData<String> errorState = _errorState;
 
-    private MutableLiveData<BoardGame> _boardGameState = new MutableLiveData<>();
+    private final MutableLiveData<BoardGame> _boardGameState = new MutableLiveData<>();
     public LiveData<BoardGame> boardGameState = _boardGameState;
 
     private Context context;
@@ -53,9 +53,9 @@ public class HomeViewModel extends ViewModel {
         }
 
         //-	1.1.4 ViewModel gọi đến Repository/Source để lấy thông tin về các cấp độ chơi
+        Log.d("SVU", "1.1.4");
         repository.getLevels(new RemoteDataSource.LevelsCallback() {
             @Override
-
             public void onSuccess(List<String> levels) {
                 //    (Rẽ nhánh từ 1.1.5) Không có dữ liệu cấp độ
                 if (levels == null || levels.isEmpty()) {
@@ -78,55 +78,6 @@ public class HomeViewModel extends ViewModel {
         });
     }
 
-    // UC-1 STEP 1.1.7
-    public void onConfigConfirmed(String name, String level) {
-        DifficultyEnum difficultyEnum;
-
-        if(name.equalsIgnoreCase(DifficultyEnum.EASY.name()))
-            difficultyEnum = DifficultyEnum.EASY;
-        else if(name.equalsIgnoreCase(DifficultyEnum.NORMAL.name()))
-            difficultyEnum = DifficultyEnum.NORMAL;
-        else if(name.equalsIgnoreCase(DifficultyEnum.HARD.name()))
-            difficultyEnum = DifficultyEnum.HARD;
-        else return;
-
-        // UC-1 STEP 1.1.8
-        if (name == null || name.trim().isEmpty()) {
-            name = "User1";
-        }
-        // UC-1 STEP 1.1.9
-        this.config = new GameConfig(name, difficultyEnum);
-        // UC-1 STEP 1.1.10
-        repository.getBoard(difficultyEnum, new RemoteDataSource.BoardCallback() {
-            @Override
-            public void onSuccess(List<Card> cards) {
-
-                if (cards == null || cards.isEmpty()) {
-                    _errorState.setValue("No cards found");
-                    return;
-                }
-
-                // SHUFFLE
-                Collections.shuffle(cards);
-
-                // CREATE BOARD GAME
-                BoardGame game = new BoardGame(
-                        cards,
-                        System.currentTimeMillis()
-                );
-
-                // UC-1 STEP 1.1.11
-                _boardGameState.setValue(game);
-            }
-
-            @Override
-            public void onError(String error) {
-                _errorState.setValue(error);
-            }
-        });
-    }
-
-    // UC1 START GAME
     public void startGame(String playerName,
                           DifficultyEnum difficulty) {
         //-	1.1.8 Nếu tên người chơi là null hoặc rỗng
@@ -173,5 +124,17 @@ public class HomeViewModel extends ViewModel {
         currentConfig = config;
 
         _gameConfigState.setValue(config);
+    }
+
+    public void setBoardGameState(BoardGame boardGameState) {
+        _boardGameState.setValue(boardGameState);
+    }
+
+    public void setLevelList(List<String> levelList) {
+        _levelList.setValue(levelList);
+    }
+
+    public void setConfigState(GameConfig gameConfig) {
+        _gameConfigState.setValue(gameConfig);
     }
 }
