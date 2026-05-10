@@ -20,6 +20,10 @@ public class HomeViewModel extends ViewModel {
 
     private GameRepository repository = new GameRepository();
     private GameConfig config;
+    private GameConfig currentConfig;
+
+    public MutableLiveData<GameConfig> gameConfigState =
+            new MutableLiveData<>();
     public MutableLiveData<List<String>> levelList = new MutableLiveData<>();
     public MutableLiveData<String> errorState = new MutableLiveData<>();
     public MutableLiveData<BoardGame> boardGameState = new MutableLiveData<>();
@@ -75,8 +79,7 @@ public class HomeViewModel extends ViewModel {
             name = "User1";
         }
         // UC-1 STEP 1.1.9
-        this.config = new GameConfig(name, difficultyEnum.name().toString());;
-
+        this.config = new GameConfig(name, difficultyEnum);
         // UC-1 STEP 1.1.10
         repository.getBoard(difficultyEnum, new RemoteDataSource.BoardCallback() {
             @Override
@@ -105,5 +108,30 @@ public class HomeViewModel extends ViewModel {
                 errorState.setValue(error);
             }
         });
+    }
+
+    // UC1 START GAME
+    public void startGame(String playerName,
+                          DifficultyEnum difficulty) {
+
+        GameConfig config =
+                new GameConfig(
+                        playerName,
+                        difficulty
+                );
+
+        // VALIDATION
+        if (!config.isValid()) {
+
+            errorState.setValue(
+                    "Invalid game config"
+            );
+
+            return;
+        }
+
+        currentConfig = config;
+
+        gameConfigState.setValue(config);
     }
 }
