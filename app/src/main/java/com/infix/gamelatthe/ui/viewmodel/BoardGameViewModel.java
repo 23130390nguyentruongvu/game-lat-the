@@ -1,5 +1,6 @@
 package com.infix.gamelatthe.ui.viewmodel;
 
+import android.os.Handler;
 import android.os.Looper;
 
 import androidx.lifecycle.LiveData;
@@ -10,13 +11,12 @@ import com.infix.gamelatthe.common.StateFlipTwoCard;
 import com.infix.gamelatthe.common.TrackStateFlipTwoCard;
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
-import com.infix.gamelatthe.data.model.PlayHistory; // Import thêm Entity này
 import com.infix.gamelatthe.data.model.GameConfig;
+import com.infix.gamelatthe.data.model.PlayHistory;
 import com.infix.gamelatthe.data.repository.HistoryRepository;
 import com.infix.gamelatthe.ui.GameRuleEngine;
 
 import java.util.List;
-import android.os.Handler;
 
 public class BoardGameViewModel extends ViewModel {
     private final Handler handler;
@@ -33,7 +33,36 @@ public class BoardGameViewModel extends ViewModel {
     private GameConfig gameConfig;
     private GameRuleEngine gameRuleEngine;
     private HistoryRepository repository ;
+    private final MutableLiveData<List<Card>> _cards = new MutableLiveData<>();
+    public LiveData<List<Card>> cards = _cards;
 
+    private final MutableLiveData<String> _error = new MutableLiveData<>();
+    public LiveData<String> error = _error;
+
+
+    // UC1.6.2 nhận config từ Home
+    public void setGameConfig(GameConfig config) {
+        if (config == null) return;
+
+        this.gameConfig = config;
+
+        // UC1.1 init BoardGame (FIX: có constructor rỗng)
+        BoardGame boardGame = new BoardGame();
+
+        // UC1.2 set start time
+        boardGame.setTimeInit(System.currentTimeMillis());
+
+        // UC1.3 init engine
+        gameRuleEngine = new GameRuleEngine(boardGame);
+
+        // UC1.4 load level
+        loadLevel(config.getDifficulty());
+    }
+    // UC1.1.4 - load level (FIX ERROR)
+    private void loadLevel(Object difficulty) {
+        // TODO: sau này connect Firestore
+        _error.setValue("Load level: " + difficulty.toString());
+    }
     public BoardGameViewModel() {
         handler = new Handler(Looper.getMainLooper());
     }
@@ -55,10 +84,6 @@ public class BoardGameViewModel extends ViewModel {
         return gameRuleEngine.getCards();
     }
 
-    public void setGameConfig(GameConfig gameConfig) {
-        if(gameConfig == null) return;
-        this.gameConfig = gameConfig;
-    }
 
     //Thiết lập đối tượng GameRuleEngine mới
     public void setBoardGame(BoardGame boardGame) {
@@ -139,7 +164,7 @@ public class BoardGameViewModel extends ViewModel {
             gameRuleEngine.trackEndTime(currentTime);
 
             // 3.1.7 Kích hoạt UC-4: Gọi onGameEnded() để lưu kết quả
-            onGameEnded(gameConfig.getPlayerName(), gameConfig.getDifficulty(),
+            onGameEnded(gameConfig.getPlayerName(), gameConfig.getDifficulty().toString(),
                     gameRuleEngine.getBoardGame().getTimeInit(), gameRuleEngine.getBoardGame().getTimeEnd());
 
             // 3.1.8 ViewModel cập nhật thông báo kết thúc

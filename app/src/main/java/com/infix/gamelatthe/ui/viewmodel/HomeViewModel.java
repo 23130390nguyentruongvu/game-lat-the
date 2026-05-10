@@ -30,10 +30,8 @@ public class HomeViewModel extends ViewModel {
         this.context = context;
     }
 
-
-    // =========================
     // 1. START GAME CLICK
-    // =========================
+
     public void onStartGameClicked() {
 
         // CHECK NETWORK
@@ -77,7 +75,7 @@ public class HomeViewModel extends ViewModel {
             name = "User1";
         }
         // UC-1 STEP 1.1.9
-        this.config = new GameConfig(name, difficultyEnum.name());;
+        this.config = new GameConfig(name, difficultyEnum.name().toString());;
 
         // UC-1 STEP 1.1.10
         repository.getBoard(difficultyEnum, new RemoteDataSource.BoardCallback() {

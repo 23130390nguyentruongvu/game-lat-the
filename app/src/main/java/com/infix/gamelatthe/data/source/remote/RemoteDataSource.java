@@ -26,30 +26,28 @@ public class RemoteDataSource {
     public void getLevels(LevelsCallback callback) {
         db.collection("levels")
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
+                .addOnSuccessListener(query -> {
                     List<String> levels = new ArrayList<>();
-                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        levels.add(doc.getId()); // EASY / NORMAL / HARD
+                    for (DocumentSnapshot doc : query) {
+                        levels.add(doc.getId());
                     }
                     callback.onSuccess(levels);
                 })
                 .addOnFailureListener(e -> callback.onError(e.getMessage()));
     }
 
-    // LOAD BOARD GAME
+    // LOAD CARDS
     public void getBoard(DifficultyEnum level, BoardCallback callback) {
-
         db.collection("boards")
                 .document(level.name())
                 .collection("cards")
                 .get()
-                .addOnSuccessListener(queryDocumentSnapshots -> {
+                .addOnSuccessListener(query -> {
 
                     List<Card> cards = new ArrayList<>();
-
-                    for (DocumentSnapshot doc : queryDocumentSnapshots) {
-                        Card card = doc.toObject(Card.class);
-                        cards.add(card);
+                    for (DocumentSnapshot doc : query) {
+                        Card c = doc.toObject(Card.class);
+                        cards.add(c);
                     }
 
                     callback.onSuccess(cards);
