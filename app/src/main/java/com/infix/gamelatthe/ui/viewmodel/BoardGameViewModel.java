@@ -33,8 +33,6 @@ public class BoardGameViewModel extends ViewModel {
     private GameConfig gameConfig;
     private GameRuleEngine gameRuleEngine;
     private HistoryRepository repository ;
-    private final MutableLiveData<List<Card>> _cards = new MutableLiveData<>();
-    public LiveData<List<Card>> cards = _cards;
 
     private final MutableLiveData<String> _error = new MutableLiveData<>();
     public LiveData<String> error = _error;
@@ -70,6 +68,16 @@ public class BoardGameViewModel extends ViewModel {
     public void setBoardGame(BoardGame boardGame) {
         if(boardGame == null) return;
         this.gameRuleEngine = new GameRuleEngine(boardGame);
+    }
+
+    public void resetAllState() {
+        _error.setValue(null);
+        _notifyMessage.setValue(null);
+        _errorEvent.setValue(null);
+        _stateFlipTwoCard.setValue(null);
+        gameRuleEngine = null;
+        secondCard = null;
+        firstCard =  null;
     }
 
     private void checkSelectionState(Card card) {

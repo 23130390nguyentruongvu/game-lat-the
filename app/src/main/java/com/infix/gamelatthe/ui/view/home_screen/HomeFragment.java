@@ -96,10 +96,11 @@ public class HomeFragment extends Fragment {
 
         homeViewModel.boardGameState.observe(getViewLifecycleOwner(), boardGame -> {
             if(boardGame == null) return;
-            //-	1.1.12 View nhận được thông báo về board game tiến hành gọi ra màn hình chuyên xử lí board game đó
+
+            boardGameViewModel.resetAllState();
             boardGameViewModel.setGameConfig(homeViewModel.gameConfigState.getValue());
             boardGameViewModel.setBoardGame(boardGame);
-
+//-	1.1.12 View nhận được thông báo về board game tiến hành gọi ra màn hình chuyên xử lí board game đó
             goToBoardGameFragment();
         });
 
