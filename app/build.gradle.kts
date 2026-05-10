@@ -37,7 +37,7 @@ android {
 }
 
 dependencies {
-    implementation(platform("com.google.firebase:firebase-bom:34.13.0"))
+    androidTestImplementation(libs.core.testing)
 
     implementation(libs.glide)
     implementation(libs.room.runtime)
