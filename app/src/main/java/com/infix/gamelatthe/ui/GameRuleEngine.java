@@ -3,6 +3,7 @@ package com.infix.gamelatthe.ui;
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
 
+import java.util.Collections;
 import java.util.List;
 
 public class GameRuleEngine {
@@ -15,6 +16,7 @@ public class GameRuleEngine {
     public boolean matchTwoCard(Card card1, Card card2){
         return  card1.getGroupId() == card2.getGroupId();
     }
+
     //3.1.2 ViewModel gọi để kiểm tra trạng thái ván chơi
     public boolean checkEndGame() {
         return checkAllCardFlipped();

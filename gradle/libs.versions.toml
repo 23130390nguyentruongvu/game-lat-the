@@ -17,6 +17,7 @@ roomTesting = "2.6.1"
 fragment = "1.8.9"
 cardview = "1.0.0"
 recyclerview = "1.4.0"
+navigationFragment = "2.9.8"
 
 [libraries]
 core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTesting" }
@@ -36,6 +37,7 @@ room-testing = { module = "androidx.room:room-testing", version.ref = "roomTesti
 fragment = { group = "androidx.fragment", name = "fragment", version.ref = "fragment" }
 cardview = { group = "androidx.cardview", name = "cardview", version.ref = "cardview" }
 recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

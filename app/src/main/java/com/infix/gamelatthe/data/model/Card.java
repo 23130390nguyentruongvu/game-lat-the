@@ -9,6 +9,8 @@ public class Card {
     private boolean isFlipped;
     private boolean isEnable;
 
+    public Card() {}
+
     public Card(int id, int groupId, String urlImage, boolean isFlipped) {
         this.id = id;
         this.groupId = groupId;
