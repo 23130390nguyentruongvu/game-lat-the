@@ -109,7 +109,7 @@ public class BoardGameViewModel extends ViewModel {
                 //2.2.6 Reset trạng thái lựa chọn thẻ
                 resetSelection();
                 //2.2.7 Kích hoạt sự kiện UC-3 (Kiểm tra kết thúc và hiển thị kết quả)
-                boolean isEnd = gameRuleEngine.checkEndGame();
+                boolean isEnd = checkEndGame();
 
                 //2.2.8 Nếu chưa kết thúc, quay lại bước 2.1.1
                 if(!isEnd) {
@@ -121,7 +121,7 @@ public class BoardGameViewModel extends ViewModel {
         }
 
         //2.1.11 Kích hoạt UC-3 (Kiểm tra kết thúc ván)
-        boolean isEnd = gameRuleEngine.checkEndGame();
+        boolean isEnd = checkEndGame();
         //2.1.12 Nếu chưa kết thúc:
         //    - Reset trạng thái lựa chọn
         //    - Cho phép người chơi tiếp tục từ bước 2.1.1
@@ -130,7 +130,7 @@ public class BoardGameViewModel extends ViewModel {
         }
     }
     // 3.1.1 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
-    private void checkEndGame() {
+    private boolean checkEndGame() {
         boolean isFinished = gameRuleEngine.checkEndGame();
 
         if (isFinished) {
@@ -143,10 +143,11 @@ public class BoardGameViewModel extends ViewModel {
                     gameRuleEngine.getBoardGame().getTimeInit(), gameRuleEngine.getBoardGame().getTimeEnd());
 
             // 3.1.8 ViewModel cập nhật thông báo kết thúc
-            _notifyMessage.setValue("Hoàn thành!");
-            resetSelection();
+            long second = ( gameRuleEngine.getBoardGame().getTimeEnd()-gameRuleEngine.getBoardGame().getTimeInit())/1000;
+            _notifyMessage.setValue("Hoàn thành ván game với thời gian chơi là " + second + "s");
+            return true;
         } else {
-            resetSelection();
+            return false;
         }
     }
     private void updateStateFlipCard(TrackStateFlipTwoCard state) {
