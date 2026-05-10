@@ -130,7 +130,7 @@ public class BoardGameViewModel extends ViewModel {
         }
     }
     // 3.1.1 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
-    private void checkEndGame() {
+    private boolean checkEndGame() {
         boolean isFinished = gameRuleEngine.checkEndGame();
 
         if (isFinished) {
@@ -144,9 +144,9 @@ public class BoardGameViewModel extends ViewModel {
 
             // 3.1.8 ViewModel cập nhật thông báo kết thúc
             _notifyMessage.setValue("Hoàn thành!");
-            resetSelection();
+            return true;
         } else {
-            resetSelection();
+            return false;
         }
     }
     private void updateStateFlipCard(TrackStateFlipTwoCard state) {
