@@ -3,7 +3,7 @@
   <component name="AndroidTestResultsUserPreferences">
     <option name="androidTestResultsTableState">
       <map>
-        <entry key="-163877132">
+        <entry key="-163878093">
           <value>
             <AndroidTestResultsTableState>
               <option name="preferredColumnWidths">
@@ -16,14 +16,14 @@
             </AndroidTestResultsTableState>
           </value>
         </entry>
-        <entry key="-163875210">
+        <entry key="1721026390">
           <value>
             <AndroidTestResultsTableState>
               <option name="preferredColumnWidths">
                 <map>
                   <entry key="Duration" value="90" />
-                  <entry key="Medium_Phone" value="120" />
                   <entry key="Tests" value="360" />
+                  <entry key="vivo V2035" value="120" />
                 </map>
               </option>
             </AndroidTestResultsTableState>

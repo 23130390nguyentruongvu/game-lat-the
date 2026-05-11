@@ -37,6 +37,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.lifecycle.viewmodel)
     androidTestImplementation(libs.core.testing)
 
     implementation(libs.glide)
@@ -44,6 +45,7 @@ dependencies {
     implementation(libs.fragment)
     implementation(libs.cardview)
     implementation(libs.recyclerview)
+    implementation(libs.navigation.fragment)
     testImplementation(libs.room.testing)
     annotationProcessor(libs.room.compiler)
 
@@ -57,4 +59,8 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation("androidx.fragment:fragment:1.6.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel:2.6.2")
+    implementation("androidx.navigation:navigation-fragment:2.7.7")
+    implementation("androidx.navigation:navigation-ui:2.7.7")
 }
