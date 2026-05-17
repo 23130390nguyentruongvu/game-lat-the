@@ -15,7 +15,6 @@ public interface PlayHistoryDao {
     // Bước 4.1.5: Thực thi lưu entity vào LocalSource (insertRecord)
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     long insertRecord(PlayHistory record);
-    // Thêm hàm này vào dưới các hàm có sẵn trong PlayHistoryDao
-    @Query("SELECT * FROM play_history WHERE difficulty = :difficulty ORDER BY (endTime - initTime) ASC LIMIT 10")
+     @Query("SELECT * FROM play_history WHERE difficulty = :difficulty ORDER BY (endTime - initTime) ASC LIMIT 10")
     List<PlayHistory> getTop10ByDifficulty(String difficulty);
 }
