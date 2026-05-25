@@ -221,9 +221,23 @@ public class BoardGameViewModel extends ViewModel {
     }
 
     private boolean validateData(PlayHistory entity) {
+
         if (entity.playerName == null || entity.playerName.trim().isEmpty()) return false;
+
+
         if (entity.difficulty == null || entity.difficulty.trim().isEmpty()) return false;
+
+
         if (entity.endTime <= entity.initTime) return false;
+
+        if (gameConfig != null && gameConfig.getDifficulty() != null) {
+            String validDifficulty = gameConfig.getDifficulty().toString();
+
+            if (!entity.difficulty.equals(validDifficulty)) {
+                return false;
+            }
+        }
+
         return true;
     }
     public void setRepository(HistoryRepository repo) {
