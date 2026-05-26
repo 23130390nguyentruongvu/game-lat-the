@@ -4,16 +4,16 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2026-05-09T07:32:52.133902300Z">
+        <DropdownSelection timestamp="2026-05-11T01:43:08.361969500Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="PhysicalDevice" identifier="serial=8df655d8" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=C:\Users\Admin\.android\avd\Medium_Phone_2.avd" />
             </handle>
           </Target>
         </DropdownSelection>
         <DialogSelection />
       </SelectionState>
-      <SelectionState runConfigName="insertAndVerifyData()">
+      <SelectionState runConfigName="TestUC1">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

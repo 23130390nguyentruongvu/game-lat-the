@@ -143,7 +143,7 @@ public class BoardGameViewModel extends ViewModel {
             resetSelection();
         }
     }
-    // 3.1.1 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
+    // 3.1.1 Hệ thống nhận sự kiện ghép thẻ thành công từ UC-2 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
     private boolean checkEndGame() {
         boolean isFinished = gameRuleEngine.checkEndGame();
 
@@ -161,6 +161,9 @@ public class BoardGameViewModel extends ViewModel {
             _notifyMessage.setValue("Hoàn thành ván game với thời gian chơi là " + second + "s");
             return true;
         } else {
+            // (Rẽ nhánh từ 3.1.4)
+            // 3.2.3 ViewModel cập nhật trạng thái tiếp tục trò chơi
+            // 3.2.5 ViewModel tiếp tục chờ tương tác từ UC2
             return false;
         }
     }

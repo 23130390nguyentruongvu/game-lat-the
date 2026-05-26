@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
         MyDatabase.getInstance(this);
-      //  initDataForFirestore();
+      // initDataForFirestore();
     }
 
     /**
