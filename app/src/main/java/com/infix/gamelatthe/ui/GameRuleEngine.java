@@ -35,7 +35,7 @@ public class GameRuleEngine {
     private boolean checkAllCardFlipped() {
         return boardGame.checkAllCardFlipped();
     }
-    // 3.1.5 + 3.1.6 tính toán và trả về thời gian hoàn thành
+    // 3.1.5 ViewModel gọi GameRuleEngine để tính toán thời gian hoàn thành. + 3.1.6 GameRuleEngine trả về thời gian hoàn thành
     public Long calcTimeFinish() {
         return boardGame.calcTimeFinish();
     }

@@ -143,7 +143,7 @@ public class BoardGameViewModel extends ViewModel {
             resetSelection();
         }
     }
-    // 3.1.1 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
+    // 3.1.1 Hệ thống nhận sự kiện ghép thẻ thành công từ UC-2 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
     private boolean checkEndGame() {
         boolean isFinished = gameRuleEngine.checkEndGame();
 
