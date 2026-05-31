@@ -42,14 +42,14 @@ public class TestUC4 {
 
     @Test
     public void insertAndVerifyData() {
-        PlayHistory record = new PlayHistory("TruongVu", "Hard", 1000L, 5000L);
+        PlayHistory record = new PlayHistory("TruongVu", "UNKNOWN", 1000L, 5000L);
         long id = dao.insertRecord(record);
 
-        List<PlayHistory> results = dao.getTop10ByDifficulty("Hard");
+        List<PlayHistory> results = dao.getTop10ByDifficulty("UNKNOWN");
         assertTrue(id > 0);
         assertFalse(results.isEmpty());
         assertEquals("TruongVu", results.get(0).playerName); // Kiểm tra tên
-        assertEquals("Hard", results.get(0).difficulty);    // Kiểm tra độ khó
+        assertEquals("UNKNOWN", results.get(0).difficulty);    // Kiểm tra độ khó
         assertEquals(4000L, results.get(0).endTime - results.get(0).initTime); // Kiểm tra logic thời gian
     }
 }

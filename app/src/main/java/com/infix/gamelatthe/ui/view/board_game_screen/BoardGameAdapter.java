@@ -46,6 +46,7 @@ public class BoardGameAdapter extends RecyclerView.Adapter<BoardGameAdapter.View
                     .centerCrop()
                     .into(binding.imgCardItem);
 
+            //2.1.0 Người chơi đang ở giao diện chứa các thẻ của BoardGame
             //2.1.1 Người chơi chọn một thẻ trên giao diện
             binding.getRoot().setOnClickListener(v->onCardClick.onCardClick(card));
         }
