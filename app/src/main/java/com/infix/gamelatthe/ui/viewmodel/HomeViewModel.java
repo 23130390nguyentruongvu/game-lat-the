@@ -14,11 +14,12 @@ import com.infix.gamelatthe.data.model.GameConfig;
 import com.infix.gamelatthe.data.repository.GameRepository;
 import com.infix.gamelatthe.data.source.remote.RemoteDataSource;
 import com.infix.gamelatthe.utils.NetworkUtils;
+import com.infix.gamelatthe.utils.Observer;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class HomeViewModel extends ViewModel {
+public class HomeViewModel extends ViewModel implements Observer {
 
     private GameRepository repository = new GameRepository();
     private GameConfig config;
@@ -35,6 +36,9 @@ public class HomeViewModel extends ViewModel {
 
     private final MutableLiveData<BoardGame> _boardGameState = new MutableLiveData<>();
     public LiveData<BoardGame> boardGameState = _boardGameState;
+
+    private final MutableLiveData<Boolean> _isNetworkValid = new MutableLiveData<>();
+    public LiveData<Boolean> isNetworkValid = _isNetworkValid;
 
     private Context context;
 
@@ -142,5 +146,10 @@ public class HomeViewModel extends ViewModel {
 
     public void setConfigState(GameConfig gameConfig) {
         _gameConfigState.setValue(gameConfig);
+    }
+
+    @Override
+    public void onUpdateNetworkValid(boolean isNetworkValid) {
+        _isNetworkValid.postValue(isNetworkValid);
     }
 }
