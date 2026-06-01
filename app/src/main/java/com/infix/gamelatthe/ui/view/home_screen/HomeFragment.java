@@ -17,6 +17,7 @@ import androidx.fragment.app.FragmentTransaction;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.infix.gamelatthe.MyApplication;
 import com.infix.gamelatthe.R;
 import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.databinding.FragmentHomeBinding;
@@ -57,6 +58,32 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         initEvents();
         initViewModels();
+        registerObserver();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+        unregisterObserver();
+    }
+
+    private void registerObserver() {
+        try {
+            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
+            myApplication.registerObserver(homeViewModel);
+        } catch (Exception e) {
+            Log.e("SVU", e.getMessage());
+        }
+    }
+
+    private void unregisterObserver() {
+        try {
+            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
+            myApplication.removeObserver(homeViewModel);
+        } catch (Exception e) {
+            Log.e("SVU", e.getMessage());
+        }
     }
 
     private void initEvents() {
@@ -83,6 +110,12 @@ public class HomeFragment extends Fragment {
         //-	1.4.2 View nhận trạng thái lỗi và hiển thị lỗi
         homeViewModel.errorState.observe(getViewLifecycleOwner(), this::showMessage);
 
+        homeViewModel.isNetworkValid.observe(getViewLifecycleOwner(), isValid -> {
+            if(isValid == null) return;
+            String msg = !isValid?"Mạng không khả dụng":"Đã có mạng trở lại";
+            showMessage(msg);
+        });
+
         homeViewModel.levelList.observe(getViewLifecycleOwner(), levels -> {
             if (levels == null) return;
             //-	1.2.3 View nhận trạng thái và hiển thị thông báo "Không có cấp độ khả dụng"
@@ -100,12 +133,11 @@ public class HomeFragment extends Fragment {
             boardGameViewModel.resetAllState();
             boardGameViewModel.setGameConfig(homeViewModel.gameConfigState.getValue());
             boardGameViewModel.setBoardGame(boardGame);
-//-	1.1.12 View nhận được thông báo về board game tiến hành gọi ra màn hình chuyên xử lí board game đó
+            //-	1.1.12 View nhận được thông báo về board game tiến hành gọi ra màn hình chuyên xử lí board game đó
             goToBoardGameFragment();
         });
 
-        //
-        homeViewModel.setContext(requireContext());
+        homeViewModel.setContext(requireContext().getApplicationContext());
     }
 
     private void goToBoardGameFragment() {
