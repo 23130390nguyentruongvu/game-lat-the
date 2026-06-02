@@ -21,4 +21,11 @@ public class GameRepository {
     public void createRoomOnline(PlayerOnline playerOnline, String difficulty, RoomOnlineListener roomOnlineListener) {
         remoteDataSource.createRoomOnline(playerOnline, difficulty, roomOnlineListener);
     }
+
+    public void enterRoomOnline(PlayerOnline playerOnline, String roomCode, RoomOnlineListener roomOnlineListener) {
+        //6.2.4 Hệ thống thực hiện truy vấn Firestore:
+        //Ghi tên và ID của Guest vào mục danh sách người chơi trong phòng.
+        //Đăng ký hàm lắng nghe sự kiện (addSnapshotListener) để đồng bộ thời gian thực với phòng này.
+        remoteDataSource.enterRoomOnline(playerOnline, roomCode, roomOnlineListener);
+    }
 }
