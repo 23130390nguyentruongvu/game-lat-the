@@ -50,4 +50,13 @@ public class GameRuleEngine {
     public BoardGame getBoardGame() {
         return boardGame;
     }
+    // 8.1.2 Thực hiện quét danh sách và xác nhận tất cả các thẻ bài đã được ghép trúng.
+    public boolean checkAllCardMatched(List<Card> cards) {
+        for (Card card : cards) {
+            if (card.isEnable()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
