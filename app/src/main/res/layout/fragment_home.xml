@@ -11,14 +11,22 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:backgroundTint="#4CAF50"
-        android:text="START GAME"/>
+        android:text="Bắt đầu game đơn" />
 
     <Button
         android:id="@+id/btnHistory"
         android:layout_width="match_parent"
         android:layout_height="50dp"
+        android:layout_marginTop="12dp"
         android:backgroundTint="#3F51B5"
-        android:text="VIEW HISTORY"
-        android:layout_marginTop="12dp"/>
+        android:text="Xem lịch sử đấu đơn" />
+
+    <Button
+        android:id="@+id/btn_start_game_online"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="#00BCD4"
+        android:text="Chơi trực tuyến" />
 
 </LinearLayout>
