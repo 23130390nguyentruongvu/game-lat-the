@@ -3,8 +3,10 @@ package com.infix.gamelatthe.data.source.remote;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.ListenerRegistration;
 import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.common.RoomOnlineListener;
+import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.common.StatusRoomOnlineEnum;
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
@@ -21,6 +23,7 @@ import java.util.Map;
 public class RemoteDataSource {
 
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private ListenerRegistration roomListenerRegistration;
 
     public interface LevelsCallback {
         void onSuccess(List<String> levels);
@@ -165,5 +168,31 @@ public class RemoteDataSource {
                         roomOnlineListener.onFailure();
                     }
                 });
+    }
+    public void startListeningToRoomByCode(String roomCode, RoomSnapshotCallback callback) {
+        stopListening();
+
+        roomListenerRegistration = db.collection("rooms")
+                .whereEqualTo("roomCode", roomCode)
+                .addSnapshotListener((snapshot, error) -> {
+                    if (error != null) {
+                        callback.onError(error);
+                        return;
+                    }
+
+                    if (snapshot != null && !snapshot.isEmpty()) {
+                        RoomOnline room = snapshot.getDocuments().get(0).toObject(RoomOnline.class);
+                        if (room != null) {
+                            callback.onDataChanged(room);
+                        }
+                    }
+                });
+    }
+
+    public void stopListening() {
+        if (roomListenerRegistration != null) {
+            roomListenerRegistration.remove();
+            roomListenerRegistration = null;
+        }
     }
 }

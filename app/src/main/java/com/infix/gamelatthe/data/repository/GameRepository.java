@@ -2,6 +2,7 @@ package com.infix.gamelatthe.data.repository;
 
 import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.common.RoomOnlineListener;
+import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.source.remote.RemoteDataSource;
 
@@ -27,5 +28,13 @@ public class GameRepository {
         //Ghi tên và ID của Guest vào mục danh sách người chơi trong phòng.
         //Đăng ký hàm lắng nghe sự kiện (addSnapshotListener) để đồng bộ thời gian thực với phòng này.
         remoteDataSource.enterRoomOnline(playerOnline, roomCode, roomOnlineListener);
+    }
+
+    public void startListeningToRoomByCode(String roomCode, RoomSnapshotCallback roomSnapshotCallback) {
+        remoteDataSource.startListeningToRoomByCode(roomCode, roomSnapshotCallback);
+    }
+
+    public void unregisterListeningToRoomByCode() {
+        remoteDataSource.stopListening();
     }
 }
