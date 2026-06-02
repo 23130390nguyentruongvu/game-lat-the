@@ -1,5 +1,8 @@
 package com.infix.gamelatthe.ui.view;
 
+import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 
 import androidx.activity.EdgeToEdge;
@@ -22,9 +25,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private BoardGameViewModel boardGameViewModel;
+    public final static String FILE_INFO_USER = "com.infix.gamelatthe.ui.view.MainActivity.FILE_INFO_USER";
+    public final static String KEY_UUID_USER = "com.infix.gamelatthe.ui.view.MainActivity.KEY_UUID_USER";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +43,21 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
         MyDatabase.getInstance(this);
+      //  initDataForFirestore();
+        initUUIDUser();
+    }
+
+    private void initUUIDUser() {
+        SharedPreferences sharedPreferences =
+                this.getSharedPreferences(FILE_INFO_USER, Context.MODE_PRIVATE);
+
+        String uuid = sharedPreferences.getString(KEY_UUID_USER, null);
+        if(uuid == null) {
+            @SuppressLint("CommitPrefEdits")
+            SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putString(KEY_UUID_USER, UUID.randomUUID().toString());
+            editor.apply();
+        }
       // initDataForFirestore();
     }
 

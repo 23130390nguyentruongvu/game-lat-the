@@ -1,5 +1,7 @@
 package com.infix.gamelatthe.data.model;
 
+import com.google.firebase.firestore.Exclude;
+
 import java.util.List;
 
 public class BoardGame {
@@ -36,10 +38,12 @@ public class BoardGame {
     }
     public void setTimeInit(Long timeInit) { this.timeInit = timeInit;}
 
+    @Exclude
     public Long getTimeInit() {
         return timeInit;
     }
 
+    @Exclude
     public Long getTimeEnd() {
         return timeEnd;
     }

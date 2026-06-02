@@ -23,6 +23,7 @@ import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.databinding.FragmentHomeBinding;
 import com.infix.gamelatthe.ui.view.board_game_screen.BoardGameFragment;
 import com.infix.gamelatthe.ui.view.history_screen.HistoryFragment;
+import com.infix.gamelatthe.ui.view.home_screen.multi.OptionOnlineFragment;
 import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
 import com.infix.gamelatthe.ui.viewmodel.HomeViewModel;
 
@@ -53,6 +54,7 @@ public class HomeFragment extends Fragment {
     }
 
 
+    //6.1.0 Người chơi mở ứng dụng, hệ thống hiển thị màn hình chính.
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -96,6 +98,12 @@ public class HomeFragment extends Fragment {
 
         binding.btnHistory.setOnClickListener(v -> {
             goToHistoryFragment();
+        });
+
+        //6.1.1 Người chơi nhấn chọn nút "Chơi trực tuyến".
+        binding.btnStartGameOnline.setOnClickListener(v -> {
+            //6.1.2 Hệ thống chuyển hướng sang giao diện sảnh trực tuyến
+            goToOptionOnlineFragment();
         });
     }
 
@@ -143,6 +151,14 @@ public class HomeFragment extends Fragment {
     private void goToBoardGameFragment() {
         FragmentTransaction transaction= requireActivity().getSupportFragmentManager().beginTransaction();
         transaction.replace(R.id.fcv_main, new BoardGameFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private void goToOptionOnlineFragment() {
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fcv_main, new OptionOnlineFragment())
                 .addToBackStack(null)
                 .commit();
     }

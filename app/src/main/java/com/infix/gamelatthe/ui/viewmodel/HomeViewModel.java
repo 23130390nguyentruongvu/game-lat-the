@@ -8,9 +8,11 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.infix.gamelatthe.common.DifficultyEnum;
+import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
 import com.infix.gamelatthe.data.model.GameConfig;
+import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.repository.GameRepository;
 import com.infix.gamelatthe.data.source.remote.RemoteDataSource;
 import com.infix.gamelatthe.utils.NetworkUtils;
@@ -86,7 +88,7 @@ public class HomeViewModel extends ViewModel implements Observer {
                           DifficultyEnum difficulty) {
         //-	1.1.8 Nếu tên người chơi là null hoặc rỗng
         //o	thiết lập tên mặc định người chơi là “User1”
-        if(playerName== null||playerName.isEmpty()) {
+        if (playerName == null || playerName.isEmpty()) {
             playerName = "User1";
         }
 
@@ -130,10 +132,26 @@ public class HomeViewModel extends ViewModel implements Observer {
         _gameConfigState.setValue(config);
     }
 
+    //6.1.5 Khởi tạo một Document mới trong bộ sưu tập rooms.
+    //Ghi nhận thông tin Host, ghi nhận cấu hình độ khó (difficulty)
+    //do Host chọn, đặt trạng thái phòng (status) là "WAITING".
+    public void createRoomOnline(
+            PlayerOnline playerOnline,
+            String difficulty,
+            RoomOnlineListener roomOnlineListener
+    ) {
+        if(Boolean.FALSE.equals(isNetworkValid.getValue())) {
+            _errorState.setValue("Mạng không khả dụng");
+            return;
+        }
+        repository.createRoomOnline(playerOnline, difficulty, roomOnlineListener);
+    }
+
     public void resetAllState() {
         this.setLevelList(null);
         this.setConfigState(null);
         this.setBoardGameState(null);
+        this._isNetworkValid.setValue(null);
     }
 
     public void setBoardGameState(BoardGame boardGameState) {

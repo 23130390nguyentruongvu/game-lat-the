@@ -48,11 +48,11 @@
             android:id="@+id/btnNormal"
             android:layout_width="0dp"
             android:layout_height="50dp"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1"
-            android:text="NORMAL"
             android:backgroundTint="#FF9800"
-            android:textColor="#FFFFFF"
-            android:layout_marginEnd="6dp"/>
+            android:text="MEDIUM"
+            android:textColor="#FFFFFF" />
 
         <Button
             android:id="@+id/btnHard"
@@ -69,9 +69,9 @@
         android:id="@+id/btnStart"
         android:layout_width="match_parent"
         android:layout_height="55dp"
-        android:text="START GAME"
         android:layout_marginTop="20dp"
         android:backgroundTint="#3F51B5"
-        android:textColor="#FFFFFF"/>
+        android:text="Xác Nhận"
+        android:textColor="#FFFFFF" />
 
 </LinearLayout>
