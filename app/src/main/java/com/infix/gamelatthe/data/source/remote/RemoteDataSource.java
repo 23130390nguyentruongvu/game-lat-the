@@ -98,7 +98,7 @@ public class RemoteDataSource {
 
                         roomsRef.document(newRoomId).set(newRoom)
                                 .addOnSuccessListener(aVoid -> {
-                                    roomOnlineListener.onSuccess();
+                                    roomOnlineListener.onSuccess(potentialCode);
                                 })
                                 .addOnFailureListener(e -> {
                                     roomOnlineListener.onFailure();
@@ -153,7 +153,7 @@ public class RemoteDataSource {
                                     .addOnSuccessListener(aVoid -> {
 //                                        currentRoom.setPlayers(currentPlayer);
 
-                                        roomOnlineListener.onSuccess();
+                                        roomOnlineListener.onSuccess(roomCode);
                                     })
                                     .addOnFailureListener(e -> {
                                         roomOnlineListener.onFailure();

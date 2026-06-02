@@ -179,12 +179,12 @@ public class OptionOnlineFragment extends Fragment {
                     selectedDifficulty[0],
                     new RoomOnlineListener() {
                         @Override
-                        public void onSuccess() {
+                        public void onSuccess(String roomCode) {
                             //6.1.6 Hệ thống hiển thị giao diện Phòng chờ, công khai mã
                             // phòng ra màn hình và hiển thị trạng thái "Đang chờ đối thủ tham gia...".
                             requireActivity().getSupportFragmentManager()
                                     .beginTransaction()
-                                    .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.HOST.role))
+                                    .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.HOST.role, roomCode))
                                     .addToBackStack(null)
                                     .commit();
                         }
@@ -255,12 +255,12 @@ public class OptionOnlineFragment extends Fragment {
 
             homeViewModel.enterRoomOnline(playerOnline, roomCode, new RoomOnlineListener() {
                 @Override
-                public void onSuccess() {
+                public void onSuccess(String roomCode) {
                     //6.2.5 Hệ thống chuyển hướng thiết bị
                     // Guest vào màn hình Phòng chờ hiển thị thông tin của Host và trạng thái "Chờ chủ phòng bắt đầu trận đấu".
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
-                            .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.GUEST.role))
+                            .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.GUEST.role, roomCode))
                             .addToBackStack(null)
                             .commit();
                 }

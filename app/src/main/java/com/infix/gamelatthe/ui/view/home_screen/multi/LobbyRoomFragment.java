@@ -16,14 +16,16 @@ import com.infix.gamelatthe.databinding.FragmentLobbyRoomBinding;
 public class LobbyRoomFragment extends Fragment {
     private FragmentLobbyRoomBinding binding;
     private static final String ARG_USER_ROLE = "ARG_USER_ROLE";
+    private static final String ARG_ROOM_CODE = "ARG_ROOM_CODE";
 
-    // TODO: Rename and change types of parameters
     private String userRole;
+    private String roomCode;
 
-    public static LobbyRoomFragment newInstance(String userRole) {
+    public static LobbyRoomFragment newInstance(String userRole, String roomCode) {
         LobbyRoomFragment fragment = new LobbyRoomFragment();
         Bundle args = new Bundle();
         args.putString(ARG_USER_ROLE, userRole);
+        args.putString(ARG_ROOM_CODE, roomCode);
         fragment.setArguments(args);
         return fragment;
     }
@@ -33,7 +35,7 @@ public class LobbyRoomFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             userRole = getArguments().getString(ARG_USER_ROLE);
-
+            roomCode = getArguments().getString(ARG_ROOM_CODE);
         }
     }
 
