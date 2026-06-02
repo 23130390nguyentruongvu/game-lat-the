@@ -1,14 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.view.home_screen.multi.OptionOnlineFragment">
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    tools:context=".ui.view.home_screen.multi.OptionOnlineFragment"
+    android:padding="24dp">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <Button
+        android:id="@+id/btn_create_room_option_online"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_height="wrap_content"
+        android:text="Tạo phòng mới" />
 
-</FrameLayout>
+    <Button
+        android:id="@+id/btn_entry_room_option_online"
+        android:layout_width="match_parent"
+        android:layout_marginTop="12dp"
+        android:layout_height="wrap_content"
+        android:text="Vào phòng bằng mã" />
+</LinearLayout>
