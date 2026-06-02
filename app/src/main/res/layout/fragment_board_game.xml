@@ -27,12 +27,12 @@
         app:layout_constraintGuide_percent="0.1" />
 
     <ImageButton
-        android:id="@+id/imageButton"
+        android:id="@+id/btn_back"
         android:layout_width="40dp"
-        android:scaleType="fitXY"
-        android:layout_marginStart="8dp"
-        android:background="?attr/selectableItemBackground"
         android:layout_height="40dp"
+        android:layout_marginStart="24dp"
+        android:background="?attr/selectableItemBackground"
+        android:scaleType="fitXY"
         android:src="@drawable/ic_back_24"
         app:layout_constraintBottom_toTopOf="@+id/rv_board_game"
         app:layout_constraintStart_toStartOf="parent"

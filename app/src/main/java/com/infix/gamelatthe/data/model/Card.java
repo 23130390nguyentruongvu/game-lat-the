@@ -3,11 +3,13 @@ package com.infix.gamelatthe.data.model;
 import java.util.Objects;
 
 public class Card {
-    private int id;
-    private int groupId;
-    private String urlImage;
-    private boolean isFlipped;
-    private boolean isEnable;
+    protected int id;
+    protected int groupId;
+    protected String urlImage;
+    protected boolean isFlipped;
+    protected boolean isEnable;
+
+    public Card() {}
 
     public Card(int id, int groupId, String urlImage, boolean isFlipped) {
         this.id = id;

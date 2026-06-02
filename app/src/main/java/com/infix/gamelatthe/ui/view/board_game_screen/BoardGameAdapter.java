@@ -46,6 +46,7 @@ public class BoardGameAdapter extends RecyclerView.Adapter<BoardGameAdapter.View
                     .centerCrop()
                     .into(binding.imgCardItem);
 
+            //2.1.0 Người chơi đang ở giao diện chứa các thẻ của BoardGame
             //2.1.1 Người chơi chọn một thẻ trên giao diện
             binding.getRoot().setOnClickListener(v->onCardClick.onCardClick(card));
         }
@@ -90,29 +91,35 @@ public class BoardGameAdapter extends RecyclerView.Adapter<BoardGameAdapter.View
     }
 
     public void disableTwoCard(Card card1, Card card2) {
-        card1.setEnable(false);
-        card2.setEnable(false);
+       try {
+           card1.setEnable(false);
+           card2.setEnable(false);
 
-        int index1 = cards.indexOf(card1);
-        int index2 = cards.indexOf(card2);
+           int index1 = cards.indexOf(card1);
+           int index2 = cards.indexOf(card2);
 
-        if(index1 != -1)
-            notifyItemChanged(index1);
-        if(index2 != -1)
-            notifyItemChanged(index2);
+           if(index1 != -1)
+               notifyItemChanged(index1);
+           if(index2 != -1)
+               notifyItemChanged(index2);
+       } catch (Exception ignore) {
+       }
     }
 
     @SuppressLint("NotifyDataSetChanged")
     public void flipBackTwoCard(Card card1, Card card2) {
-        card1.setFlipped(false);
-        card2.setFlipped(false);
+        try {
+            card1.setFlipped(false);
+            card2.setFlipped(false);
 
-        int index1 = cards.indexOf(card1);
-        int index2 = cards.indexOf(card2);
+            int index1 = cards.indexOf(card1);
+            int index2 = cards.indexOf(card2);
 
-        if(index1 != -1)
-            notifyItemChanged(index1);
-        if(index2 != -1)
-            notifyItemChanged(index2);
+            if(index1 != -1)
+                notifyItemChanged(index1);
+            if(index2 != -1)
+                notifyItemChanged(index2);
+        } catch (Exception ignored) {
+        }
     }
 }

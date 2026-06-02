@@ -11,7 +11,8 @@ public class BoardGame {
         this.cards = cards;
         this.timeInit = timeInit;
     }
-
+    // UC1.7.1 - init BoardGame
+    public BoardGame() {}
     public List<Card> getCards() {
         return cards;
     }
@@ -33,6 +34,7 @@ public class BoardGame {
     public void setTimeEnd(Long timeEnd) {
         this.timeEnd = timeEnd;
     }
+    public void setTimeInit(Long timeInit) { this.timeInit = timeInit;}
 
     public Long getTimeInit() {
         return timeInit;
@@ -41,4 +43,5 @@ public class BoardGame {
     public Long getTimeEnd() {
         return timeEnd;
     }
+
 }

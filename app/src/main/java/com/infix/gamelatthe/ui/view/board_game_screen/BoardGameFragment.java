@@ -21,9 +21,10 @@ import com.infix.gamelatthe.data.source.local.MyDatabase;
 import com.infix.gamelatthe.databinding.FragmentBoardGameBinding;
 import com.infix.gamelatthe.ui.view.MainActivity;
 import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
+import com.infix.gamelatthe.ui.viewmodel.HomeViewModel;
 
 public class BoardGameFragment extends Fragment {
-
+    private HomeViewModel homeViewModel;
     private FragmentBoardGameBinding binding;
     private BoardGameAdapter boardGameAdapter;
     private BoardGameViewModel boardGameViewModel;
@@ -48,8 +49,18 @@ public class BoardGameFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         initBoardGameViewModel();
+        initHomeViewModel();
         initRecyclerView();
         observeErrorEvent();
+
+        binding.btnBack.setOnClickListener(v ->
+                requireActivity().getSupportFragmentManager().popBackStack());
+    }
+
+    @Override
+    public void onStop() {
+        homeViewModel.resetAllState();
+        super.onStop();
     }
 
     private void initBoardGameViewModel() {
@@ -65,6 +76,9 @@ public class BoardGameFragment extends Fragment {
         observeStateFlipTwoCard();
         observeNotifyMessage();
     }
+    private void initHomeViewModel() {
+        homeViewModel = new ViewModelProvider(requireActivity()).get(HomeViewModel.class);
+    }
 
     private void initRecyclerView() {
         boardGameAdapter = new BoardGameAdapter(card -> {
@@ -77,6 +91,8 @@ public class BoardGameFragment extends Fragment {
 
     private void observeStateFlipTwoCard() {
         boardGameViewModel.stateFlipTwoCard.observe(getViewLifecycleOwner(), state -> {
+            if(state == null) return;
+
             switch (state.getState()) {
                 //2.2.2 View nhận được thông báo và cập nhật thông báo không khớp
                 case NOT_MATCH: {
@@ -105,9 +121,6 @@ public class BoardGameFragment extends Fragment {
                 //2.1.10 View nhận được thông báo và update disable 2 card
                 case DISABLE_TWO_CARD_NOW: {
                     boardGameAdapter.disableTwoCard(boardGameViewModel.getFirstCard(), boardGameViewModel.getSecondCard());
-                    // 3.1.9 View quan sát trạng thái và kiểm tra nếu ván kết thúc
-                    if (boardGameAdapter.areAllCardsDisabled()) {
-                    }
                     break;
                 }
 
@@ -117,10 +130,12 @@ public class BoardGameFragment extends Fragment {
 
     private void observeNotifyMessage() {
         //2.3.2 View quan sát nhận được trạng thái lỗi và hiển thị
+        // 3.1.9 View quan sát trạng thái và kiểm tra nếu ván kết thúc
         boardGameViewModel.notifyMessage.observe(getViewLifecycleOwner(), this::showMessage);
     }
 
     private void showMessage(String msg) {
+        if (msg == null) return;
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
     }
 

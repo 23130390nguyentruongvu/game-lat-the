@@ -1,5 +1,6 @@
 package com.infix.gamelatthe.ui.viewmodel;
 
+import android.os.Handler;
 import android.os.Looper;
 
 import androidx.lifecycle.LiveData;
@@ -10,13 +11,12 @@ import com.infix.gamelatthe.common.StateFlipTwoCard;
 import com.infix.gamelatthe.common.TrackStateFlipTwoCard;
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
-import com.infix.gamelatthe.data.model.PlayHistory; // Import thêm Entity này
 import com.infix.gamelatthe.data.model.GameConfig;
+import com.infix.gamelatthe.data.model.PlayHistory;
 import com.infix.gamelatthe.data.repository.HistoryRepository;
 import com.infix.gamelatthe.ui.GameRuleEngine;
 
 import java.util.List;
-import android.os.Handler;
 
 public class BoardGameViewModel extends ViewModel {
     private final Handler handler;
@@ -33,6 +33,14 @@ public class BoardGameViewModel extends ViewModel {
     private GameConfig gameConfig;
     private GameRuleEngine gameRuleEngine;
     private HistoryRepository repository ;
+
+    private final MutableLiveData<String> _error = new MutableLiveData<>();
+    public LiveData<String> error = _error;
+
+    public void setGameConfig(GameConfig config) {
+        if (config == null) return;
+        this.gameConfig = config;
+    }
 
     public BoardGameViewModel() {
         handler = new Handler(Looper.getMainLooper());
@@ -55,15 +63,21 @@ public class BoardGameViewModel extends ViewModel {
         return gameRuleEngine.getCards();
     }
 
-    public void setGameConfig(GameConfig gameConfig) {
-        if(gameConfig == null) return;
-        this.gameConfig = gameConfig;
-    }
 
     //Thiết lập đối tượng GameRuleEngine mới
     public void setBoardGame(BoardGame boardGame) {
         if(boardGame == null) return;
         this.gameRuleEngine = new GameRuleEngine(boardGame);
+    }
+
+    public void resetAllState() {
+        _error.setValue(null);
+        _notifyMessage.setValue(null);
+        _errorEvent.setValue(null);
+        _stateFlipTwoCard.setValue(null);
+        gameRuleEngine = null;
+        secondCard = null;
+        firstCard =  null;
     }
 
     private void checkSelectionState(Card card) {
@@ -109,7 +123,7 @@ public class BoardGameViewModel extends ViewModel {
                 //2.2.6 Reset trạng thái lựa chọn thẻ
                 resetSelection();
                 //2.2.7 Kích hoạt sự kiện UC-3 (Kiểm tra kết thúc và hiển thị kết quả)
-                boolean isEnd = gameRuleEngine.checkEndGame();
+                boolean isEnd = checkEndGame();
 
                 //2.2.8 Nếu chưa kết thúc, quay lại bước 2.1.1
                 if(!isEnd) {
@@ -121,7 +135,7 @@ public class BoardGameViewModel extends ViewModel {
         }
 
         //2.1.11 Kích hoạt UC-3 (Kiểm tra kết thúc ván)
-        boolean isEnd = gameRuleEngine.checkEndGame();
+        boolean isEnd = checkEndGame();
         //2.1.12 Nếu chưa kết thúc:
         //    - Reset trạng thái lựa chọn
         //    - Cho phép người chơi tiếp tục từ bước 2.1.1
@@ -129,8 +143,8 @@ public class BoardGameViewModel extends ViewModel {
             resetSelection();
         }
     }
-    // 3.1.1 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
-    private void checkEndGame() {
+    // 3.1.1 Hệ thống nhận sự kiện ghép thẻ thành công từ UC-2 và 3.1.2 View Model gọi GameRuleEngine để kiểm tra trạng thái ván chơi
+    private boolean checkEndGame() {
         boolean isFinished = gameRuleEngine.checkEndGame();
 
         if (isFinished) {
@@ -139,14 +153,18 @@ public class BoardGameViewModel extends ViewModel {
             gameRuleEngine.trackEndTime(currentTime);
 
             // 3.1.7 Kích hoạt UC-4: Gọi onGameEnded() để lưu kết quả
-            onGameEnded(gameConfig.getPlayerName(), gameConfig.getDifficulty(),
+            onGameEnded(gameConfig.getPlayerName(), gameConfig.getDifficulty().toString(),
                     gameRuleEngine.getBoardGame().getTimeInit(), gameRuleEngine.getBoardGame().getTimeEnd());
 
             // 3.1.8 ViewModel cập nhật thông báo kết thúc
-            _notifyMessage.setValue("Hoàn thành!");
-            resetSelection();
+            long second = ( gameRuleEngine.getBoardGame().getTimeEnd()-gameRuleEngine.getBoardGame().getTimeInit())/1000;
+            _notifyMessage.setValue("Hoàn thành ván game với thời gian chơi là " + second + "s");
+            return true;
         } else {
-            resetSelection();
+            // (Rẽ nhánh từ 3.1.4)
+            // 3.2.3 ViewModel cập nhật trạng thái tiếp tục trò chơi
+            // 3.2.5 ViewModel tiếp tục chờ tương tác từ UC2
+            return false;
         }
     }
     private void updateStateFlipCard(TrackStateFlipTwoCard state) {
@@ -206,9 +224,23 @@ public class BoardGameViewModel extends ViewModel {
     }
 
     private boolean validateData(PlayHistory entity) {
+
         if (entity.playerName == null || entity.playerName.trim().isEmpty()) return false;
+
+
         if (entity.difficulty == null || entity.difficulty.trim().isEmpty()) return false;
+
+
         if (entity.endTime <= entity.initTime) return false;
+
+        if (gameConfig != null && gameConfig.getDifficulty() != null) {
+            String validDifficulty = gameConfig.getDifficulty().toString();
+
+            if (!entity.difficulty.equals(validDifficulty)) {
+                return false;
+            }
+        }
+
         return true;
     }
     public void setRepository(HistoryRepository repo) {
