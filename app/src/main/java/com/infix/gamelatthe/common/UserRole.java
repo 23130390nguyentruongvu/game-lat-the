@@ -4,7 +4,7 @@ public enum UserRole {
     HOST("HOST"),
     GUEST("GUEST");
 
-    String role;
+    public String role;
 
     UserRole(String role) {
         this.role = role;

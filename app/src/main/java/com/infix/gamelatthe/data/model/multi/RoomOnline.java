@@ -13,6 +13,9 @@ public class RoomOnline {
     private List<PlayerOnline> players;
     private BoardGame boardGame;
 
+    public RoomOnline() {
+    }
+
     public RoomOnline(String roomId, String roomCode, String status,
                       String difficulty, String currentTurn, String winnerId,
                       Date createAt, List<PlayerOnline> players, BoardGame boardGame) {
@@ -61,5 +64,41 @@ public class RoomOnline {
 
     public BoardGame getBoardGame() {
         return boardGame;
+    }
+
+    public void setRoomId(String roomId) {
+        this.roomId = roomId;
+    }
+
+    public void setRoomCode(String roomCode) {
+        this.roomCode = roomCode;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public void setDifficulty(String difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public void setCurrentTurn(String currentTurn) {
+        this.currentTurn = currentTurn;
+    }
+
+    public void setWinnerId(String winnerId) {
+        this.winnerId = winnerId;
+    }
+
+    public void setCreateAt(Date createAt) {
+        this.createAt = createAt;
+    }
+
+    public void setPlayers(List<PlayerOnline> players) {
+        this.players = players;
+    }
+
+    public void setBoardGame(BoardGame boardGame) {
+        this.boardGame = boardGame;
     }
 }
