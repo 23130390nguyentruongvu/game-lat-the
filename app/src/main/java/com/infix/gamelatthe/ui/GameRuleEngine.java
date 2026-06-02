@@ -19,13 +19,23 @@ public class GameRuleEngine {
 
     //3.1.2 ViewModel gọi để kiểm tra trạng thái ván chơi
     public boolean checkEndGame() {
-        return checkAllCardFlipped();
+        boolean isFinished = checkAllCardFlipped();
+        
+        if (isFinished) {
+            // 3.1.4 GameRuleEngine trả về kết quả (kết thúc)
+            return true;
+        } else {
+            // (Rẽ nhánh từ 3.1.4)
+            // 3.2.1 GameRuleEngine xác định ván chơi chưa kết thúc do còn thẻ chưa lật
+            // 3.2.2 GameRuleEngine trả về trạng thái chưa kết thúc
+            return false;
+        }
     }
     //3.1.3 - Kiểm tra tất cả thẻ và xác định trạng thái ván chơi
     private boolean checkAllCardFlipped() {
         return boardGame.checkAllCardFlipped();
     }
-    // 3.1.5 + 3.1.6 tính toán và trả về thời gian hoàn thành
+    // 3.1.5 ViewModel gọi GameRuleEngine để tính toán thời gian hoàn thành. + 3.1.6 GameRuleEngine trả về thời gian hoàn thành
     public Long calcTimeFinish() {
         return boardGame.calcTimeFinish();
     }
@@ -39,5 +49,14 @@ public class GameRuleEngine {
 
     public BoardGame getBoardGame() {
         return boardGame;
+    }
+    // 8.1.2 Thực hiện quét danh sách và xác nhận tất cả các thẻ bài đã được ghép trúng.
+    public boolean checkAllCardMatched(List<Card> cards) {
+        for (Card card : cards) {
+            if (card.isEnable()) {
+                return false;
+            }
+        }
+        return true;
     }
 }
