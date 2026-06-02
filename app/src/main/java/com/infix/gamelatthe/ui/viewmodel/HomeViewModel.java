@@ -147,6 +147,14 @@ public class HomeViewModel extends ViewModel implements Observer {
         repository.createRoomOnline(playerOnline, difficulty, roomOnlineListener);
     }
 
+    public void enterRoomOnline(PlayerOnline playerOnline, String roomCode, RoomOnlineListener roomOnlineListener) {
+        if(Boolean.FALSE.equals(isNetworkValid.getValue())) {
+            _errorState.setValue("Mạng không khả dụng");
+            return;
+        }
+        repository.enterRoomOnline(playerOnline, roomCode, roomOnlineListener);
+    }
+
     public void resetAllState() {
         this.setLevelList(null);
         this.setConfigState(null);

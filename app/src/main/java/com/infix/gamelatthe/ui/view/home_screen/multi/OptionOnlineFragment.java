@@ -89,6 +89,15 @@ public class OptionOnlineFragment extends Fragment {
             //6.1.3 Người chơi nhấn nút "Tạo phòng mới" (Vai trò HOST). Hệ thống hiển thị popup cấu hình phòng đấu.
             showDialogConfigRoomOnline();
         });
+
+        //entry room
+        binding.btnEntryRoomOptionOnline.setOnClickListener(v -> {
+            //-	Người chơi tham gia phòng bằng mã: (Rẽ nhánh từ bước
+            // 6.1.2 khi người chơi muốn tham gia vào phòng có sẵn thay vì tạo mới)
+
+            //6.2.1 Tại giao diện sảnh trực tuyến, người chơi nhấn chọn nút "Vào phòng bằng mã" (Vai trò GUEST)
+            showJoinRoomDialog();
+        });
     }
 
     private void showMessage(String msg) {
@@ -175,14 +184,14 @@ public class OptionOnlineFragment extends Fragment {
                             // phòng ra màn hình và hiển thị trạng thái "Đang chờ đối thủ tham gia...".
                             requireActivity().getSupportFragmentManager()
                                     .beginTransaction()
-                                    .replace(R.id.fcv_main, new LobbyRoomFragment())
+                                    .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.HOST.role))
                                     .addToBackStack(null)
                                     .commit();
                         }
 
                         @Override
                         public void onFailure() {
-
+                            showMessage("Lỗi không thể tạo phòng");
                         }
                     }
             );
@@ -190,6 +199,87 @@ public class OptionOnlineFragment extends Fragment {
             dialog.dismiss();
         });
 
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+            );
+        }
+    }
+
+    private void showJoinRoomDialog() {
+        Dialog dialog = new Dialog(requireContext());
+        dialog.setContentView(R.layout.dialog_join_room);
+        dialog.setCancelable(true);
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        EditText edtGuestName = dialog.findViewById(R.id.edtGuestName);
+        EditText edtRoomCode = dialog.findViewById(R.id.edtRoomCode);
+        Button btnConfirmJoin = dialog.findViewById(R.id.btnConfirmJoin);
+
+        //6.2.3 Guest nhập chuỗi mã phòng gồm 6 ký tự do Host cung cấp và nhấn nút "Xác nhận tham gia".
+        btnConfirmJoin.setOnClickListener(v -> {
+            String guestName = edtGuestName.getText().toString().trim();
+            String roomCode = edtRoomCode.getText().toString().trim().toUpperCase();
+
+            // Kiểm tra tính hợp lệ của dữ liệu đầu vào (Validation)
+            if (guestName.isEmpty()) {
+                edtGuestName.setError("Vui lòng nhập tên của bạn!");
+                return;
+            }
+
+            if (roomCode.isEmpty() || roomCode.length() < 6) {
+                edtRoomCode.setError("Mã phòng phải chứa đúng 6 ký tự!");
+                return;
+            }
+            SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(
+                    MainActivity.FILE_INFO_USER,
+                    Context.MODE_PRIVATE
+            );
+            String uuid = sharedPreferences.getString(MainActivity.KEY_UUID_USER, null);
+            if (uuid == null) {
+                showMessage("Uuid chưa tồn tại");
+                return;
+            }
+            PlayerOnline playerOnline = new PlayerOnline(
+                    uuid,
+                    guestName,
+                    0,
+                    true,
+                    UserRole.GUEST.role
+            );
+
+            homeViewModel.enterRoomOnline(playerOnline, roomCode, new RoomOnlineListener() {
+                @Override
+                public void onSuccess() {
+                    //6.2.5 Hệ thống chuyển hướng thiết bị
+                    // Guest vào màn hình Phòng chờ hiển thị thông tin của Host và trạng thái "Chờ chủ phòng bắt đầu trận đấu".
+                    requireActivity().getSupportFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.GUEST.role))
+                            .addToBackStack(null)
+                            .commit();
+                }
+
+                @Override
+                public void onFailure() {
+                    //6.4.2 Hệ thống không thực hiện liên kết dữ liệu, đưa ra thông báo
+                    // cảnh báo lỗi trực quan lên màn hình: "Mã phòng không chính xác
+                    // hoặc phòng đã đầy kết nối!".
+                    //6.4.3 Hệ thống xóa trống ô nhập liệu và quay lại màn hình nhập mã ở bước 6.2.2.
+                    showMessage("Mã phòng không chính xác hoặc phòng đã đầy kết nối!");
+                }
+            });
+
+            showMessage("Đang kiểm tra mã phòng...");
+            dialog.dismiss();
+        });
+
+        //6.2.2 Hệ thống hiển thị ô nhập liệu: mã phòng, tên người chơi.
         dialog.show();
         if (dialog.getWindow() != null) {
             dialog.getWindow().setLayout(

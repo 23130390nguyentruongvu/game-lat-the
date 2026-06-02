@@ -14,7 +14,9 @@ import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.utils.AppUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RemoteDataSource {
 
@@ -101,6 +103,64 @@ public class RemoteDataSource {
                                 .addOnFailureListener(e -> {
                                     roomOnlineListener.onFailure();
                                 });
+                    } else {
+                        roomOnlineListener.onFailure();
+                    }
+                });
+    }
+
+    public void enterRoomOnline(PlayerOnline guestPlayer, String roomCode, RoomOnlineListener roomOnlineListener) {
+
+        db.collection("rooms")
+                .whereEqualTo("roomCode", roomCode)
+                .whereEqualTo("status", StatusRoomOnlineEnum.WAITING.name())
+                .get()
+                .addOnCompleteListener(task -> {
+                    //-	Mã phòng không tồn tại: (Rẽ nhánh từ bước 6.2.3 khi hệ thống kiểm tra mã phòng từ Firebase)
+                    //6.4.1 Hệ thống quét cơ sở dữ liệu Firestore và phát hiện ra một trong các sự cố sau:
+                    //	Mã phòng nhập vào không tồn tại trên hệ thống dữ liệu.
+                    //	Phòng đấu tương ứng đã đủ 2 người chơi (Trạng thái phòng khác "WAITING").
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        if (task.getResult().isEmpty()) {
+                            roomOnlineListener.onFailure();
+                            return;
+                        }
+
+                        DocumentSnapshot roomDoc = task.getResult().getDocuments().get(0);
+                        String roomId = roomDoc.getId();
+
+                        RoomOnline currentRoom = roomDoc.toObject(RoomOnline.class);
+
+                        if (currentRoom != null) {
+                            List<PlayerOnline> currentPlayers = currentRoom.getPlayers();
+                            if (currentPlayers == null) {
+                                currentPlayers = new ArrayList<>();
+                            }
+
+                            if (currentPlayers.size() >= 2) {
+                                roomOnlineListener.onFailure();
+                                return;
+                            }
+
+                            currentPlayers.add(guestPlayer);
+
+                            Map<String, Object> updates = new HashMap<>();
+                            updates.put("players", currentPlayers);
+//                             updates.put("status", "PLAYING");
+
+                            db.collection("rooms").document(roomId)
+                                    .update(updates)
+                                    .addOnSuccessListener(aVoid -> {
+//                                        currentRoom.setPlayers(currentPlayer);
+
+                                        roomOnlineListener.onSuccess();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        roomOnlineListener.onFailure();
+                                    });
+                        } else {
+                            roomOnlineListener.onFailure();
+                        }
                     } else {
                         roomOnlineListener.onFailure();
                     }
