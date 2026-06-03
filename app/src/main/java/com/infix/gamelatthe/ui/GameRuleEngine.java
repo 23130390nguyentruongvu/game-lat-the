@@ -2,7 +2,7 @@ package com.infix.gamelatthe.ui;
 
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
-
+import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,5 +58,13 @@ public class GameRuleEngine {
             }
         }
         return true;
+    }
+    // [8.1.3] + [8.1.4] Thực hiện so sánh thuộc tính score (điểm số) hiện tại của hai đối tượng
+    public String calculateWinner(PlayerOnline host, PlayerOnline guest) {
+        if (host.getScore() >= guest.getScore()) {
+            return host.getUuid();
+        } else {
+            return guest.getUuid();
+        }
     }
 }
