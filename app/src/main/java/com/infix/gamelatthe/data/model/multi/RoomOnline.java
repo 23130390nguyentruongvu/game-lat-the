@@ -3,10 +3,11 @@ package com.infix.gamelatthe.data.model.multi;
 import com.google.firebase.firestore.ServerTimestamp;
 import com.infix.gamelatthe.data.model.BoardGame;
 
+import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
 
-public class RoomOnline {
+public class RoomOnline implements Serializable {
     private String roomId, roomCode, status, difficulty, currentTurn, winnerId;
     @ServerTimestamp
     private Date createAt;

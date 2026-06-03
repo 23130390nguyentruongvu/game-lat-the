@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.data.repository.GameRepository;
@@ -28,8 +29,24 @@ public class LobbyRoomViewModel extends ViewModel {
         repository.startListeningToRoomByCode(roomCode, roomSnapshotCallback);
     }
 
+    public void leaveRoomOnline(String uuid, String roomCode, RoomOnlineListener roomOnlineListener) {
+        if(Boolean.FALSE.equals(isNetworkValid.getValue())) {
+            _notifyMsg.setValue("Mạng không khả dụng");
+            return;
+        }
+        repository.leaveRoomOnline(uuid, roomCode, roomOnlineListener);
+    }
+
     public void setRoomOnlineState(RoomOnline roomOnline) {
         _roomData.setValue(roomOnline);
+    }
+
+    public void startGameOnline(String roomCode, RoomOnlineListener roomOnlineListener) {
+        if(Boolean.FALSE.equals(isNetworkValid.getValue())) {
+            _notifyMsg.setValue("Mạng không khả dụng");
+            return;
+        }
+        repository.startGameOnline(roomCode, roomOnlineListener);
     }
 
     public void resetAllState() {
