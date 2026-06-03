@@ -24,6 +24,7 @@ import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.databinding.FragmentLobbyRoomBinding;
 import com.infix.gamelatthe.ui.view.MainActivity;
+import com.infix.gamelatthe.ui.view.board_game_screen.multi.OnlineBoardGameFragment;
 import com.infix.gamelatthe.ui.viewmodel.LobbyRoomViewModel;
 
 public class LobbyRoomFragment extends Fragment {
@@ -204,7 +205,12 @@ public class LobbyRoomFragment extends Fragment {
     }
 
     private void navigateToBoardGameOnline(RoomOnline room) {
-        showMessage("Navigate");
+        showMessage("Bắt đầu game");
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fcv_main, OnlineBoardGameFragment.newInstance(room))
+                .addToBackStack(null)
+                .commit();
     }
 
     private void showMessage(String msg) {

@@ -4,7 +4,6 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.common.RoomSnapshotCallback;
@@ -290,6 +289,12 @@ public class RemoteDataSource {
                         roomOnlineListener.onFailure();
                         return;
                     }
+                    //6.1.9 Hệ thống tiến hành khởi tạo ma trận thẻ trực tuyến trong phòng chơi:
+                    //Hệ thống (máy Host) truy vấn dữ liệu cấu trúc thẻ bài gốc từ Collection boards/[difficulty]/cards của phiên bản 1.
+                    //Thuật toán tại thiết bị Host thực hiện trộn ngẫu nhiên vị trí các thẻ bài vừa lấy về.
+                    //Bổ sung thuộc tính trạng thái trực tuyến cho từng thẻ bài: isFlipped = false và isMatched = false.
+                    //Đẩy toàn bộ mảng dữ liệu trạng thái bàn chơi (boardState) này lên Document của phòng chơi trên Firestore.
+                    //Ngẫu nhiên chọn một người giữ lượt đi trước bằng cách gán ID vào trường currentTurn và đổi trạng thái phòng (status) sang "PLAYING".
 
                     String difficulty = roomOnline.getDifficulty();
 
