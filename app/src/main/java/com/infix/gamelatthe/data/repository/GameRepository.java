@@ -4,11 +4,13 @@ import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
+import com.infix.gamelatthe.data.source.remote.GamePlayOnlineDataSource;
 import com.infix.gamelatthe.data.source.remote.RemoteDataSource;
 
 public class GameRepository {
 
     private final RemoteDataSource remoteDataSource = new RemoteDataSource();
+    private final GamePlayOnlineDataSource gamePlayOnlineDataSource = new GamePlayOnlineDataSource();
 
     public void getLevels(RemoteDataSource.LevelsCallback callback) {
         remoteDataSource.getLevels(callback);
