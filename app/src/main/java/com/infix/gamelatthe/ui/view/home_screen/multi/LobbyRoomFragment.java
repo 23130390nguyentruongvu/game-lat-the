@@ -1,5 +1,7 @@
 package com.infix.gamelatthe.ui.view.home_screen.multi;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,15 +11,19 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.auth.User;
 import com.infix.gamelatthe.R;
+import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.common.UserRole;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.databinding.FragmentLobbyRoomBinding;
+import com.infix.gamelatthe.ui.view.MainActivity;
 import com.infix.gamelatthe.ui.viewmodel.LobbyRoomViewModel;
 
 public class LobbyRoomFragment extends Fragment {
@@ -82,6 +88,13 @@ public class LobbyRoomFragment extends Fragment {
         }
 
         if (roomCode != null) {
+            //6.1.7 Đối thủ thực hiện nhập mã để kết nối vào phòng chơi.
+            // Hệ thống Firestore Real-time Listener nhận biết phòng đã đủ
+            // 2/2 người (trường players.guest đã được điền dữ liệu), lập tức
+            // cập nhật giao diện hiển thị thông tin đối thủ trên cả hai máy và
+            // kích hoạt trạng thái sẵn sàng (isEnabled = true) cho nút "Bắt đầu ván đấu" trên máy Host.
+
+            //6.2.6 Quay trở lại bước 6.1.7 của Luồng chính.
             lobbyRoomViewModel.startListeningToRoomByCode(roomCode, new RoomSnapshotCallback() {
                 @Override
                 public void onDataChanged(RoomOnline room) {
@@ -97,19 +110,48 @@ public class LobbyRoomFragment extends Fragment {
 
         lobbyRoomViewModel.roomData.observe(getViewLifecycleOwner(), this::handleRoomUpdate);
 
+        //6.3.1 Người chơi nhấn nút "Hủy" hoặc nút "Rời phòng" trên giao diện phòng chờ.
         binding.btnLeaveRoomLobbyRoom.setOnClickListener(v -> {
-            //back
+            SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(
+                    MainActivity.FILE_INFO_USER,
+                    Context.MODE_PRIVATE
+            );
+            String uuid = sharedPreferences.getString(MainActivity.KEY_UUID_USER, null);
+            if(uuid == null) {
+                showMessage("UUID của người dùng không tồn tại");
+                return;
+            }
+
+            lobbyRoomViewModel.leaveRoomOnline(uuid, roomCode, new RoomOnlineListener() {
+                @Override
+                public void onSuccess(String message) {
+                    //6.3.3 Hệ thống đưa người chơi vừa thoát quay lại màn hình chính ở bước 6.1.0.
+                    FragmentManager fm = requireActivity().getSupportFragmentManager();
+                    fm.popBackStack();
+                    fm.popBackStack();
+                }
+
+                @Override
+                public void onFailure() {
+                    showMessage("Rời phòng thất bại");
+                }
+            });
         });
 
         binding.btnStartGameLobbyRoom.setOnClickListener(v -> {
             if ("HOST".equals(userRole)) {
                 Toast.makeText(requireContext(), "Đang chuẩn bị trận đấu...", Toast.LENGTH_SHORT).show();
-
             }
         });
     }
 
     private void handleRoomUpdate(RoomOnline room) {
+        if(room == null && userRole.equals(UserRole.GUEST.role)) {
+            FragmentManager fm = requireActivity().getSupportFragmentManager();
+            fm.popBackStack();
+            fm.popBackStack();
+            return;
+        }
         if (room == null || room.getPlayers() == null) return;
 
         PlayerOnline host = null;
@@ -135,7 +177,6 @@ public class LobbyRoomFragment extends Fragment {
                 binding.btnStartGameLobbyRoom.setText("Bắt đầu ván đấu");
             }
         } else {
-            // Trường hợp phòng chưa có đối thủ vào, hoặc đối thủ vừa bấm nút thoát ra ngoài
             binding.tvLabelNameGuestLoobyRoom.setText("Đối thủ (Guest): Đang chờ đối thủ tham gia...");
             if ("HOST".equals(userRole)) {
                 binding.btnStartGameLobbyRoom.setEnabled(false);

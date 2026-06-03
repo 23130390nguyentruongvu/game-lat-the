@@ -37,4 +37,8 @@ public class GameRepository {
     public void unregisterListeningToRoomByCode() {
         remoteDataSource.stopListening();
     }
+
+    public void leaveRoomOnline(String uuid, String roomCode, RoomOnlineListener roomOnlineListener) {
+        remoteDataSource.leaveRoomOnline(uuid, roomCode, roomOnlineListener);
+    }
 }

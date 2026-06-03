@@ -4,10 +4,12 @@ import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.QuerySnapshot;
 import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.common.StatusRoomOnlineEnum;
+import com.infix.gamelatthe.common.UserRole;
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
 
@@ -27,11 +29,13 @@ public class RemoteDataSource {
 
     public interface LevelsCallback {
         void onSuccess(List<String> levels);
+
         void onError(String error);
     }
 
     public interface BoardCallback {
         void onSuccess(List<Card> cards);
+
         void onError(String error);
     }
 
@@ -169,6 +173,7 @@ public class RemoteDataSource {
                     }
                 });
     }
+
     public void startListeningToRoomByCode(String roomCode, RoomSnapshotCallback callback) {
         stopListening();
 
@@ -185,7 +190,82 @@ public class RemoteDataSource {
                         if (room != null) {
                             callback.onDataChanged(room);
                         }
+                    } else if (snapshot != null && snapshot.isEmpty()) {
+                        callback.onDataChanged(null);
                     }
+                });
+    }
+
+    public void leaveRoomOnline(String uuid, String roomCode, RoomOnlineListener roomOnlineListener) {
+        db.collection("rooms")
+                .whereEqualTo("roomCode", roomCode)
+                .get().addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                        DocumentSnapshot docSnap = task.getResult().getDocuments().get(0);
+                        String docId = docSnap.getId();
+
+                        RoomOnline roomOnline = docSnap.toObject(RoomOnline.class);
+                        if (roomOnline == null || roomOnline.getPlayers() == null) {
+                            roomOnlineListener.onFailure();
+                            return;
+                        }
+
+                        PlayerOnline targetPlayer = null;
+                        for (PlayerOnline p : roomOnline.getPlayers()) {
+                            if (p.getUuid().equals(uuid)) {
+                                targetPlayer = p;
+                                break;
+                            }
+                        }
+
+                        if (targetPlayer == null) {
+                            roomOnlineListener.onFailure();
+                            return;
+                        }
+
+                        //6.3.2 Hệ thống tiến hành cập nhật lại trạng thái trên cơ sở dữ liệu Firebase Firestore:
+                        if (targetPlayer.getUuid().equals(uuid)) {
+                            //	Nếu là Host rời phòng: Hệ thống xóa hoàn toàn document của phòng đó trên Firestore.
+                            if (UserRole.HOST.role.equals(targetPlayer.getRole())) {
+                                db.collection("rooms")
+                                        .document(docId)
+                                        .delete()
+                                        .addOnSuccessListener(aVoid -> {
+                                            roomOnlineListener.onSuccess("Chuyển hướng");
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            roomOnlineListener.onFailure();
+                                        });
+                            }
+                            //	Nếu là Guest rời phòng: Hệ thống xóa thông tin của
+                            // Guest ra khỏi document phòng, chuyển trạng thái phòng quay lại
+                            // thành "WAITING". Thiết bị của Host nhận được sự kiện cập nhật sẽ ẩn thông
+                            // tin Guest đi và tiếp tục chờ người mới.
+                            else if (UserRole.GUEST.role.equals(targetPlayer.getRole())) {
+                                roomOnline.getPlayers().remove(targetPlayer);
+
+                                Map<String, Object> updates = new HashMap<>();
+                                updates.put("players", roomOnline.getPlayers());
+                                updates.put("status", StatusRoomOnlineEnum.WAITING.name());
+
+                                db.collection("rooms")
+                                        .document(docId)
+                                        .update(updates)
+                                        .addOnSuccessListener(aVoid -> {
+                                            roomOnlineListener.onSuccess("Chuyển hướng");
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            roomOnlineListener.onFailure();
+                                        });
+                            } else {
+                                roomOnlineListener.onFailure();
+                                return;
+                            }
+                        }
+
+
+                    } else
+                        roomOnlineListener.onFailure();
                 });
     }
 

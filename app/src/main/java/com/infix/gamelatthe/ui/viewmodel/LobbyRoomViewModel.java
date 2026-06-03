@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.data.repository.GameRepository;
@@ -26,6 +27,10 @@ public class LobbyRoomViewModel extends ViewModel {
             return;
         }
         repository.startListeningToRoomByCode(roomCode, roomSnapshotCallback);
+    }
+
+    public void leaveRoomOnline(String uuid, String roomCode, RoomOnlineListener roomOnlineListener) {
+        repository.leaveRoomOnline(uuid, roomCode, roomOnlineListener);
     }
 
     public void setRoomOnlineState(RoomOnline roomOnline) {
