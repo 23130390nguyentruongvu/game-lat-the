@@ -30,11 +30,23 @@ public class LobbyRoomViewModel extends ViewModel {
     }
 
     public void leaveRoomOnline(String uuid, String roomCode, RoomOnlineListener roomOnlineListener) {
+        if(Boolean.FALSE.equals(isNetworkValid.getValue())) {
+            _notifyMsg.setValue("Mạng không khả dụng");
+            return;
+        }
         repository.leaveRoomOnline(uuid, roomCode, roomOnlineListener);
     }
 
     public void setRoomOnlineState(RoomOnline roomOnline) {
         _roomData.setValue(roomOnline);
+    }
+
+    public void startGameOnline(String roomCode, RoomOnlineListener roomOnlineListener) {
+        if(Boolean.FALSE.equals(isNetworkValid.getValue())) {
+            _notifyMsg.setValue("Mạng không khả dụng");
+            return;
+        }
+        repository.startGameOnline(roomCode, roomOnlineListener);
     }
 
     public void resetAllState() {

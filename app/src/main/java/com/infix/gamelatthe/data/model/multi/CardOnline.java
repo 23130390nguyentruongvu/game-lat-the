@@ -5,9 +5,11 @@ import com.infix.gamelatthe.data.model.Card;
 public class CardOnline extends Card {
     private boolean isMatched;
 
-    public CardOnline(int id, int groupId, String urlImage, boolean isFlipped, boolean isMatched) {
+    public CardOnline(){}
+
+    public CardOnline(int id, int groupId, String urlImage, boolean isFlipped) {
         super(id, groupId, urlImage, isFlipped);
-        this.isMatched = isMatched;
+        this.isMatched = false;
     }
 
     public boolean isMatched() {

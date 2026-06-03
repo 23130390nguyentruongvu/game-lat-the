@@ -13,14 +13,17 @@ import com.infix.gamelatthe.common.UserRole;
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
 
+import com.infix.gamelatthe.data.model.multi.CardOnline;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.utils.AppUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class RemoteDataSource {
 
@@ -266,6 +269,83 @@ public class RemoteDataSource {
 
                     } else
                         roomOnlineListener.onFailure();
+                });
+    }
+
+    public void startGameOnline(String roomCode, RoomOnlineListener roomOnlineListener) {
+        db.collection("rooms")
+                .whereEqualTo("roomCode", roomCode)
+                .get()
+                .addOnCompleteListener(roomTask -> {
+                    if (!roomTask.isSuccessful() || roomTask.getResult() == null || roomTask.getResult().isEmpty()) {
+                        roomOnlineListener.onFailure();
+                        return;
+                    }
+
+                    DocumentSnapshot roomDocSnap = roomTask.getResult().getDocuments().get(0);
+                    String roomId = roomDocSnap.getId();
+                    RoomOnline roomOnline = roomDocSnap.toObject(RoomOnline.class);
+
+                    if (roomOnline == null || roomOnline.getPlayers() == null || roomOnline.getPlayers().isEmpty()) {
+                        roomOnlineListener.onFailure();
+                        return;
+                    }
+
+                    String difficulty = roomOnline.getDifficulty();
+
+                    db.collection("boards")
+                            .document(difficulty.toUpperCase())
+                            .collection("cards")
+                            .get()
+                            .addOnCompleteListener(cardsTask -> {
+                                if (!cardsTask.isSuccessful() || cardsTask.getResult() == null || cardsTask.getResult().isEmpty()) {
+                                    roomOnlineListener.onFailure();
+                                    return;
+                                }
+
+                                List<Card> originalCards = new ArrayList<>();
+                                for (DocumentSnapshot cardDoc : cardsTask.getResult().getDocuments()) {
+                                    CardOnline card = cardDoc.toObject(CardOnline.class);
+                                    if (card != null) {
+                                        card.setFlipped(false);
+                                        card.setMatched(false);
+                                        originalCards.add(card);
+                                    }
+                                }
+
+                                Collections.shuffle(originalCards);
+
+                                List<PlayerOnline> players = roomOnline.getPlayers();
+                                Random random = new Random();
+                                int randomIndex = random.nextInt(players.size());
+                                String firstTurnPlayerId = players.get(randomIndex).getUuid();
+
+                                Map<String, Object> updates = new HashMap<>();
+
+                                if (roomOnline.getBoardGame() != null) {
+                                    roomOnline.getBoardGame().setCards(originalCards);
+                                    updates.put("boardGame", roomOnline.getBoardGame());
+                                } else {
+                                    BoardGame boardGameMap = new BoardGame();
+                                    boardGameMap.setCards(originalCards);
+                                    updates.put("boardGame", boardGameMap);
+                                }
+
+                                updates.put("currentTurn", firstTurnPlayerId);
+                                updates.put("status", StatusRoomOnlineEnum.PLAYING.name());
+
+                                db.collection("rooms").document(roomId)
+                                        .update(updates)
+                                        .addOnSuccessListener(aVoid -> {
+                                            roomOnlineListener.onSuccess("Trận đấu bắt đầu!");
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            roomOnlineListener.onFailure();
+                                        });
+                            });
+                })
+                .addOnFailureListener(e -> {
+                    roomOnlineListener.onFailure();
                 });
     }
 

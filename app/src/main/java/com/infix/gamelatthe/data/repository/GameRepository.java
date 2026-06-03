@@ -41,4 +41,8 @@ public class GameRepository {
     public void leaveRoomOnline(String uuid, String roomCode, RoomOnlineListener roomOnlineListener) {
         remoteDataSource.leaveRoomOnline(uuid, roomCode, roomOnlineListener);
     }
+
+    public void startGameOnline(String roomCode, RoomOnlineListener roomOnlineListener) {
+        remoteDataSource.startGameOnline(roomCode, roomOnlineListener);
+    }
 }

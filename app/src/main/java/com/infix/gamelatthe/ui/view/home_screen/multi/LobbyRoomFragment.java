@@ -138,9 +138,21 @@ public class LobbyRoomFragment extends Fragment {
             });
         });
 
+        //6.1.8 Host nhấn nút "Bắt đầu ván đấu".
         binding.btnStartGameLobbyRoom.setOnClickListener(v -> {
             if ("HOST".equals(userRole)) {
                 Toast.makeText(requireContext(), "Đang chuẩn bị trận đấu...", Toast.LENGTH_SHORT).show();
+                lobbyRoomViewModel.startGameOnline(roomCode, new RoomOnlineListener() {
+                    @Override
+                    public void onSuccess(String message) {
+
+                    }
+
+                    @Override
+                    public void onFailure() {
+
+                    }
+                });
             }
         });
     }
@@ -184,14 +196,15 @@ public class LobbyRoomFragment extends Fragment {
             }
         }
 
-        //chuyen man hinh
+        //6.1.10 Hệ thống lắng nghe dữ liệu trạng thái bàn chơi trên
+        // Firestore và chuyển sang màn hình lật thẻ khi trạng thái là “PLAYING”.
         if ("PLAYING".equals(room.getStatus())) {
             navigateToBoardGameOnline(room);
         }
     }
 
     private void navigateToBoardGameOnline(RoomOnline room) {
-
+        showMessage("Navigate");
     }
 
     private void showMessage(String msg) {
