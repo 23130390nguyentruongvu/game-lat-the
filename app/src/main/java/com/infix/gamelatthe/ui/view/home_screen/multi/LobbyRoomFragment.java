@@ -72,9 +72,9 @@ public class LobbyRoomFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        registerObserver();
         lobbyRoomViewModel = new ViewModelProvider(requireActivity()).get(LobbyRoomViewModel.class);
         lobbyRoomViewModel.notifyMsg.observe(getViewLifecycleOwner(), this::showMessage);
+        registerObserver();
         initUI();
     }
 

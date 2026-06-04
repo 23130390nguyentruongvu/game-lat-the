@@ -20,6 +20,7 @@ import com.infix.gamelatthe.utils.Observer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class HomeViewModel extends ViewModel implements Observer {
 
@@ -160,7 +161,6 @@ public class HomeViewModel extends ViewModel implements Observer {
         this.setConfigState(null);
         this.setBoardGameState(null);
         _errorState.setValue(null);
-        _isNetworkValid.setValue(null);
     }
 
     public void setBoardGameState(BoardGame boardGameState) {
@@ -177,6 +177,7 @@ public class HomeViewModel extends ViewModel implements Observer {
 
     @Override
     public void onUpdateNetworkValid(boolean isNetworkValid) {
+        Log.d("HomeViewModel", "Network change: " + isNetworkValid);
         _isNetworkValid.postValue(isNetworkValid);
     }
 }

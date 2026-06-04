@@ -14,6 +14,7 @@ import java.util.List;
 
 public class NetworkListener {
     private boolean isRegistered = false;
+    private boolean currentNetwork;
     private List<Observer> observers = new ArrayList<>();
     private ConnectivityManager connectivityManager;
     private ConnectivityManager.NetworkCallback networkCallback;
@@ -21,6 +22,7 @@ public class NetworkListener {
 
     public NetworkListener(Context applicationContext) {
         context = applicationContext;
+        currentNetwork = NetworkUtils.isNetworkAvailable(applicationContext);
     }
 
     //-	Lỗi kết nối mạng kết nối đến Firebase dịch vụ: (Rẽ nhánh tại bất kỳ bước nào
@@ -32,8 +34,6 @@ public class NetworkListener {
         // của hệ thống chủ động phát hiện thiết bị mất tín hiệu Internet (Wi-Fi/4G bị ngắt đột ngột)
         NetworkRequest networkRequest = new NetworkRequest.Builder()
                 .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-                .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
                 .build();
 
         connectivityManager =
@@ -43,7 +43,8 @@ public class NetworkListener {
             @Override
             public void onAvailable(@NonNull Network network) {
                 updateObservers(true);
-                Log.d("NetworkListener", Thread.currentThread().getName());
+                currentNetwork = true;
+                Log.d("NetworkListener", Thread.currentThread().getName() + true);
             }
 
             @Override
@@ -52,7 +53,8 @@ public class NetworkListener {
                 // thái là false. Các đối tượng quán sát dựa vào đó để quyết
                 // định gọi hàm liên quan đến mạng hay không.
                 updateObservers(false);
-                Log.d("NetworkListener", Thread.currentThread().getName());
+                currentNetwork = false;
+                Log.d("NetworkListener", Thread.currentThread().getName() + false);
             }
         };
 
@@ -75,6 +77,7 @@ public class NetworkListener {
         if (observer == null) return;
         if (!isRegistered)
             registerNetworkChange();
+        observer.onUpdateNetworkValid(currentNetwork);
         observers.add(observer);
     }
 
