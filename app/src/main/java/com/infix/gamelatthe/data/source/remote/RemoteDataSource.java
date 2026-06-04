@@ -41,6 +41,11 @@ public class RemoteDataSource {
         void onError(String error);
     }
 
+    public interface LeaderboardCallback {
+        void onSuccess(List<RoomOnline> rooms);
+        void onFailure(String error);
+    }
+
     // LOAD LEVELS
     public void getLevels(LevelsCallback callback) {
         db.collection("levels")
@@ -359,5 +364,27 @@ public class RemoteDataSource {
             roomListenerRegistration.remove();
             roomListenerRegistration = null;
         }
+    }
+    public void queryRoomsByUserUUID(String userUUID, LeaderboardCallback callback) {
+        db.collection("rooms")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    List<RoomOnline> matchedRooms = new ArrayList<>();
+
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        RoomOnline room = doc.toObject(RoomOnline.class);
+                        if (room != null && room.getPlayers() != null) {
+                            for (PlayerOnline player : room.getPlayers()) {
+                                if (player.getUuid().equals(userUUID)) {
+                                    matchedRooms.add(room);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    callback.onSuccess(matchedRooms);
+                })
+                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
     }
 }
