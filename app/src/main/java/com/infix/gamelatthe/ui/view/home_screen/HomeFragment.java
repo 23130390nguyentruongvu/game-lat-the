@@ -58,33 +58,12 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         initEvents();
         initViewModels();
-        registerObserver();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        homeViewModel.resetAllState();
-        unregisterObserver();
-    }
-
-    private void registerObserver() {
-        try {
-            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
-            myApplication.registerObserver(homeViewModel);
-        } catch (Exception e) {
-            Log.e("SVU", e.getMessage());
-        }
-    }
-
-    private void unregisterObserver() {
-        try {
-            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
-            myApplication.removeObserver(homeViewModel);
-        } catch (Exception e) {
-            Log.e("SVU", e.getMessage());
-        }
     }
 
     private void initEvents() {

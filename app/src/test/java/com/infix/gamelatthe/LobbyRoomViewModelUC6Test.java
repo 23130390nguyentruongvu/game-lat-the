@@ -67,4 +67,30 @@ public class LobbyRoomViewModelUC6Test {
 
         verify(repository).startGameOnline(eq(roomCode), eq(mockListener));
     }
+
+    @Test
+    public void leaveRoomOnline_KhiMatMang_SeChanLaiNgayTaiViewModel() {
+        viewModel.setIsNetworkValidState(false);
+
+        String uuid = "USER_V_456";
+        String roomCode = "ROOM123";
+        RoomOnlineListener mockListener = org.mockito.Mockito.mock(RoomOnlineListener.class);
+        viewModel.leaveRoomOnline(uuid, roomCode, mockListener);
+
+        assertEquals("Mạng không khả dụng", viewModel.notifyMsg.getValue());
+
+        verify(repository, never()).leaveRoomOnline(eq(uuid), eq(roomCode), any());
+    }
+
+    @Test
+    public void leaveRoomOnline_KhiCoMangHopLe_SeGoiRepositoryDeXuLyXoaPhong() {
+        viewModel.setIsNetworkValidState(true);
+
+        String uuid = "USER_V_456";
+        String roomCode = "ROOM123";
+        RoomOnlineListener mockListener = org.mockito.Mockito.mock(RoomOnlineListener.class);
+        viewModel.leaveRoomOnline(uuid, roomCode, mockListener);
+
+        verify(repository).leaveRoomOnline(eq(uuid), eq(roomCode), eq(mockListener));
+    }
 }

@@ -40,7 +40,7 @@ public class LobbyRoomViewModel extends ViewModel implements Observer {
     }
 
     public void leaveRoomOnline(String uuid, String roomCode, RoomOnlineListener roomOnlineListener) {
-        if(Boolean.FALSE.equals(isNetworkValid.getValue())) {
+        if(Boolean.FALSE.equals(isNetworkValid.getValue()) || isNetworkValid.getValue() == null) {
             _notifyMsg.setValue("Mạng không khả dụng");
             return;
         }
