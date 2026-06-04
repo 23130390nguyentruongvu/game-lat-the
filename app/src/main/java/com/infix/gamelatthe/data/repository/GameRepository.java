@@ -6,6 +6,7 @@ import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.source.remote.GamePlayOnlineDataSource;
 import com.infix.gamelatthe.data.source.remote.RemoteDataSource;
+import com.infix.gamelatthe.data.model.multi.RoomOnline;
 
 public class GameRepository {
 
@@ -47,4 +48,8 @@ public class GameRepository {
     public void startGameOnline(String roomCode, RoomOnlineListener roomOnlineListener) {
         remoteDataSource.startGameOnline(roomCode, roomOnlineListener);
     }
+    public void updateBoardAndTurn(RoomOnline roomOnline) {
+        gamePlayOnlineDataSource.updateBoardAndTurn(roomOnline);
+    }
+
 }

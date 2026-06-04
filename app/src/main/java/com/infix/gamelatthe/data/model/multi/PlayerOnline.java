@@ -50,4 +50,7 @@ public class PlayerOnline {
     public int hashCode() {
         return Objects.hash(getUuid(), getName(), getScore(), isReady(), getRole());
     }
+    public void setScore(int score) {
+        this.score = score;
+    }
 }
