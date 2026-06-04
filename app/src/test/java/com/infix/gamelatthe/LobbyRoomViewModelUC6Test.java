@@ -14,6 +14,7 @@ import androidx.lifecycle.Observer;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.infix.gamelatthe.common.RoomOnlineListener;
+import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.data.repository.GameRepository;
 import com.infix.gamelatthe.ui.viewmodel.LobbyRoomViewModel;
 
@@ -92,5 +93,32 @@ public class LobbyRoomViewModelUC6Test {
         viewModel.leaveRoomOnline(uuid, roomCode, mockListener);
 
         verify(repository).leaveRoomOnline(eq(uuid), eq(roomCode), eq(mockListener));
+    }
+
+    @Test
+    public void testUC6_KhiFirestoreDongBoRoomStatusLaPLAYING_DuLieuLiveDataPhaiCapNhat() {
+        RoomOnline mockRoom = new RoomOnline();
+        mockRoom.setStatus("PLAYING");
+
+        Observer<RoomOnline> roomObserver = org.mockito.Mockito.mock(Observer.class);
+        viewModel.roomData.observeForever(roomObserver);
+
+        viewModel.setRoomOnlineState(mockRoom);
+
+        assertEquals("PLAYING", viewModel.roomData.getValue().getStatus());
+        verify(roomObserver).onChanged(mockRoom);
+    }
+
+    @Test
+    public void testUC6_KhiFirestoreDongBoRoomStatusLaWAITING_DuLieuPhaiGiuNguyen_ChuaDuocChuyenManHinh() {
+        RoomOnline mockRoom = new RoomOnline();
+        mockRoom.setStatus("WAITING");
+
+        Observer<RoomOnline> roomObserver = org.mockito.Mockito.mock(Observer.class);
+        viewModel.roomData.observeForever(roomObserver);
+
+        viewModel.setRoomOnlineState(mockRoom);
+
+        assertEquals("WAITING", viewModel.roomData.getValue().getStatus());
     }
 }
