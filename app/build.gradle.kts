@@ -9,6 +9,13 @@ android {
         version = release(36)
     }
 
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
+
     defaultConfig {
         applicationId = "com.infix.gamelatthe"
         minSdk = 26
@@ -57,6 +64,8 @@ dependencies {
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.core.testing)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation("androidx.fragment:fragment:1.6.2")

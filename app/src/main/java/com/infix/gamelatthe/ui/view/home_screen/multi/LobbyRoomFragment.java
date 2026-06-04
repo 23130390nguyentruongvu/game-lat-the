@@ -3,6 +3,7 @@ package com.infix.gamelatthe.ui.view.home_screen.multi;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.firestore.auth.User;
+import com.infix.gamelatthe.MyApplication;
 import com.infix.gamelatthe.R;
 import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.common.RoomSnapshotCallback;
@@ -70,10 +72,38 @@ public class LobbyRoomFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        registerObserver();
         lobbyRoomViewModel = new ViewModelProvider(requireActivity()).get(LobbyRoomViewModel.class);
         lobbyRoomViewModel.notifyMsg.observe(getViewLifecycleOwner(), this::showMessage);
         initUI();
     }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
+        unregisterObserver();
+        lobbyRoomViewModel.resetAllState();
+    }
+
+    private void registerObserver() {
+        try {
+            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
+            myApplication.registerObserver(lobbyRoomViewModel);
+        } catch (Exception e) {
+            Log.e("SVU", e.getMessage());
+        }
+    }
+
+    private void unregisterObserver() {
+        try {
+            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
+            myApplication.removeObserver(lobbyRoomViewModel);
+        } catch (Exception e) {
+            Log.e("SVU", e.getMessage());
+        }
+    }
+
 
 
     private void initUI() {
@@ -215,12 +245,5 @@ public class LobbyRoomFragment extends Fragment {
 
     private void showMessage(String msg) {
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
-        lobbyRoomViewModel.resetAllState();
     }
 }
