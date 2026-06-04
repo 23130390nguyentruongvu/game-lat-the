@@ -159,7 +159,8 @@ public class HomeViewModel extends ViewModel implements Observer {
         this.setLevelList(null);
         this.setConfigState(null);
         this.setBoardGameState(null);
-        this._isNetworkValid.setValue(null);
+        _errorState.setValue(null);
+        _isNetworkValid.setValue(null);
     }
 
     public void setBoardGameState(BoardGame boardGameState) {

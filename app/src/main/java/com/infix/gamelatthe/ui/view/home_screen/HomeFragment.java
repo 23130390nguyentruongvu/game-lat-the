@@ -31,8 +31,6 @@ import java.util.List;
 
 public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
-    private Button btnStartGame;
-    private Button btnHistory;
 
     private HomeViewModel homeViewModel;
     private BoardGameViewModel boardGameViewModel;
@@ -67,6 +65,7 @@ public class HomeFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+        homeViewModel.resetAllState();
         unregisterObserver();
     }
 
