@@ -45,6 +45,7 @@ android {
 
 dependencies {
     implementation(libs.lifecycle.viewmodel)
+    implementation(libs.fragment.testing)
     androidTestImplementation(libs.core.testing)
 
     implementation(libs.glide)
