@@ -1,5 +1,6 @@
 package com.infix.gamelatthe.ui.view.board_game_screen.multi;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -22,6 +23,7 @@ import com.infix.gamelatthe.ui.view.MainActivity;
 import com.infix.gamelatthe.ui.view.board_game_screen.BoardGameAdapter;
 import com.infix.gamelatthe.ui.viewmodel.LobbyRoomViewModel;
 import com.infix.gamelatthe.ui.viewmodel.OnlineBoardGameViewModel;
+
 
 public class OnlineBoardGameFragment extends Fragment {
     private FragmentOnlineBoardGameBinding binding;
@@ -101,11 +103,57 @@ public class OnlineBoardGameFragment extends Fragment {
                 boardGameAdapter.updateCards(room.getBoardGame().getCards());
             }
         });
+        // [8.1.9] Hiện Dialog Kết Quả
+        onlineBoardGameViewModel.gameOverEvent.observe(getViewLifecycleOwner(), winnerId -> {
+            if (winnerId != null) showGameOverDialog(winnerId);
+        });
+
+        // [8.3.4] Hiện thông báo mất mạng
+        onlineBoardGameViewModel.networkError.observe(getViewLifecycleOwner(), isError -> {
+            if (isError != null && isError) showNetworkErrorDialog();
+        });
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+    private void showConfirmAbandonDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Xác nhận rời trận")
+                .setMessage("Bạn có chắc chắn muốn bỏ cuộc? Bạn sẽ bị tính là THUA cuộc lập tức.")
+                .setPositiveButton("Rời phòng", (dialog, which) -> {
+                    onlineBoardGameViewModel.abandonGame(currentUserId, roomOnline);
+                })
+                .setNegativeButton("Ở lại", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
+                .show();
+    }
+
+    private void showGameOverDialog(String winnerId) {
+        String title, msg;
+        if ("DRAW".equals(winnerId)) {
+            title = "KẾT QUẢ HÒA!"; msg = "Cả hai đều có số điểm bằng nhau!";
+        } else if (currentUserId.equals(winnerId)) {
+            title = "CHIẾN THẮNG! 🎉"; msg = "Bạn đã giành chiến thắng!";
+        } else {
+            title = "THUA CUỘC 😢"; msg = "Đối thủ đã giành chiến thắng!";
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(title).setMessage(msg)
+                .setPositiveButton("Quay về Lobby", (dialog, which) -> {
+                    requireActivity().getSupportFragmentManager().popBackStack();
+                })
+                .setCancelable(false).show();
+    }
+
+    private void showNetworkErrorDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Lỗi kết nối mạng")
+                .setMessage("Không thể đồng bộ kết quả. Vui lòng kiểm tra Internet!")
+                .setPositiveButton("Đã hiểu", (dialog, which) -> dialog.dismiss())
+                .show();
     }
 }
