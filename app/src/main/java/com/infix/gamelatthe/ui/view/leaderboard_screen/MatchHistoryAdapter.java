@@ -1,118 +1,74 @@
 package com.infix.gamelatthe.ui.view.leaderboard_screen;
 
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
+import androidx.recyclerview.widget.ListAdapter;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.infix.gamelatthe.R;
 import com.infix.gamelatthe.data.model.multi.MatchHistoryItem;
-import com.infix.gamelatthe.databinding.ItemMatchHistoryBinding;
-import com.infix.gamelatthe.common.OnCardClick;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+public class MatchHistoryAdapter extends ListAdapter<MatchHistoryItem, MatchHistoryAdapter.MatchHistoryViewHolder> {
 
-public class MatchHistoryAdapter extends RecyclerView.Adapter<MatchHistoryAdapter.MatchHistoryViewHolder> {
-
-    private List<MatchHistoryItem> matchHistoryList = new ArrayList<>();
-    private final OnCardClick onItemClick;
-
-    public MatchHistoryAdapter(OnCardClick onItemClick) {
-        this.onItemClick = onItemClick;
+    public MatchHistoryAdapter() {
+        super(DIFF_CALLBACK);
     }
 
     @NonNull
     @Override
     public MatchHistoryViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        ItemMatchHistoryBinding binding = ItemMatchHistoryBinding.inflate(
-                LayoutInflater.from(parent.getContext()),
-                parent,
-                false
-        );
-        return new MatchHistoryViewHolder(binding);
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_match_history, parent, false);
+        return new MatchHistoryViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull MatchHistoryViewHolder holder, int position) {
-        MatchHistoryItem item = matchHistoryList.get(position);
+        MatchHistoryItem item = getItem(position);
         holder.bind(item);
     }
 
-    @Override
-    public int getItemCount() {
-        return matchHistoryList.size();
-    }
-
-    /**
-     * Cập nhật danh sách lịch sử trận đấu
-     * @param newList Danh sách mới
-     */
-    public void updateMatchHistory(List<MatchHistoryItem> newList) {
-        this.matchHistoryList = newList != null ? newList : new ArrayList<>();
-        notifyDataSetChanged();
-    }
-
-    /**
-     * ViewHolder cho mỗi item trong danh sách
-     */
     static class MatchHistoryViewHolder extends RecyclerView.ViewHolder {
-        private final ItemMatchHistoryBinding binding;
+        private final TextView tvOpponentName;
+        private final TextView tvResult;
+        private final TextView tvDifficulty;
+        private final TextView tvPlayTime;
+        private final TextView tvRole;
+        private final TextView tvScore; // Added TextView for score
 
-        public MatchHistoryViewHolder(ItemMatchHistoryBinding binding) {
-            super(binding.getRoot());
-            this.binding = binding;
+        public MatchHistoryViewHolder(@NonNull View itemView) {
+            super(itemView);
+            tvOpponentName = itemView.findViewById(R.id.tv_opponent_name);
+            tvResult = itemView.findViewById(R.id.tv_result);
+            tvDifficulty = itemView.findViewById(R.id.tv_difficulty);
+            tvPlayTime = itemView.findViewById(R.id.tv_play_time);
+            tvRole = itemView.findViewById(R.id.tv_role);
+            tvScore = itemView.findViewById(R.id.tv_score); // Initialize TextView for score
         }
 
-        /**
-         * Bind dữ liệu vào UI
-         */
         public void bind(MatchHistoryItem item) {
-            // Tên đối thủ
-            binding.tvOpponentName.setText("Vs: " + item.getOpponentName());
-
-            // Kết quả (WIN/LOSE) và màu sắc
-            if ("WIN".equals(item.getResult())) {
-                binding.tvResult.setText("Thắng");
-                binding.tvResult.setTextColor(binding.getRoot().getContext().getColor(android.R.color.holo_green_dark));
-            } else {
-                binding.tvResult.setText("Thua");
-                binding.tvResult.setTextColor(binding.getRoot().getContext().getColor(android.R.color.holo_red_dark));
-            }
-
-            // Độ khó
-            binding.tvDifficulty.setText("Độ khó: " + item.getDifficulty());
-
-            // Vai trò (HOST/GUEST)
-            binding.tvRole.setText("Vai trò: " + item.getRole());
-
-            // So sánh điểm
-            String scoreText = "Điểm: " + item.getScore() + " vs " + item.getOpponentScore();
-            binding.tvScore.setText(scoreText);
-
-            // Thời gian chơi
-            if (item.getPlayDuration() != null && item.getPlayDuration() > 0) {
-                long seconds = item.getPlayDuration() / 1000;
-                long minutes = seconds / 60;
-                long secs = seconds % 60;
-                binding.tvPlayDuration.setText(String.format("Thời gian: %d:%02d", minutes, secs));
-            } else {
-                binding.tvPlayDuration.setText("Thời gian: --:--");
-            }
-
-            // Thời gian tạo phòng
-            if (item.getCreateAt() != null) {
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault());
-                String dateStr = sdf.format(item.getCreateAt());
-                binding.tvCreateAt.setText(dateStr);
-            } else {
-                binding.tvCreateAt.setText("--/--/---- --:--");
-            }
-
-            // Mã phòng
-            binding.tvRoomCode.setText("Mã phòng: " + item.getRoomCode());
+            tvOpponentName.setText("Đối thủ: " + item.opponentName);
+            tvResult.setText("Kết quả: " + item.result);
+            tvDifficulty.setText("Độ khó: " + item.difficulty);
+            tvPlayTime.setText("Thời gian: " + item.playTime + "s");
+            tvRole.setText("Vai trò: " + item.role);
+            tvScore.setText("Điểm: " + item.score); // Display the score
         }
     }
+
+    private static final DiffUtil.ItemCallback<MatchHistoryItem> DIFF_CALLBACK = new DiffUtil.ItemCallback<MatchHistoryItem>() {
+        @Override
+        public boolean areItemsTheSame(@NonNull MatchHistoryItem oldItem, @NonNull MatchHistoryItem newItem) {
+            return oldItem.roomId.equals(newItem.roomId); // Assuming roomId is unique
+        }
+
+        @Override
+        public boolean areContentsTheSame(@NonNull MatchHistoryItem oldItem, @NonNull MatchHistoryItem newItem) {
+            return oldItem.equals(newItem); // Requires MatchHistoryItem to implement equals()
+        }
+    };
 }

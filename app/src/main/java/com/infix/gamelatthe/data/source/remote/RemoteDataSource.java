@@ -41,9 +41,10 @@ public class RemoteDataSource {
         void onError(String error);
     }
 
-    public interface LeaderboardCallback {
-        void onSuccess(List<RoomOnline> rooms);
-        void onFailure(String error);
+    // Đổi tên từ LeaderboardCallback thành RoomQueryCallback để khớp với đặc tả
+    public interface RoomQueryCallback {
+        void onRoomsLoaded(List<RoomOnline> rooms);
+        void onError(String error);
     }
 
     // LOAD LEVELS
@@ -365,7 +366,8 @@ public class RemoteDataSource {
             roomListenerRegistration = null;
         }
     }
-    public void queryRoomsByUserUUID(String userUUID, LeaderboardCallback callback) {
+    // Cập nhật để sử dụng RoomQueryCallback
+    public void queryRoomsByUserUUID(String userUUID, RoomQueryCallback callback) {
         db.collection("rooms")
                 .get()
                 .addOnSuccessListener(snapshot -> {
@@ -383,8 +385,8 @@ public class RemoteDataSource {
                         }
                     }
 
-                    callback.onSuccess(matchedRooms);
+                    callback.onRoomsLoaded(matchedRooms); // Đổi onSuccess thành onRoomsLoaded
                 })
-                .addOnFailureListener(e -> callback.onFailure(e.getMessage()));
+                .addOnFailureListener(e -> callback.onError(e.getMessage())); // Đổi onFailure thành onError
     }
 }
