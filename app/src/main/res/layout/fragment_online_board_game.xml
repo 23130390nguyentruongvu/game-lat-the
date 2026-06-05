@@ -12,6 +12,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="center"
         android:padding="8dp"
+        android:contentDescription="Bàn cờ game lật thẻ trực tuyến"
         tools:listitem="@layout/item_card" />
 
 </FrameLayout>
