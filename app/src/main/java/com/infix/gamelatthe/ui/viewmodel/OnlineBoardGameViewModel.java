@@ -10,11 +10,13 @@ import com.infix.gamelatthe.data.model.multi.CardOnline;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.data.repository.GameRepository;
+import com.infix.gamelatthe.ui.GameRuleEngine;
 
 import java.util.List;
 
 public class OnlineBoardGameViewModel extends ViewModel {
     private final GameRepository gameRepository = new GameRepository();
+    private GameRuleEngine gameRuleEngine;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private CardOnline firstCard = null;
@@ -53,8 +55,9 @@ public class OnlineBoardGameViewModel extends ViewModel {
 
             // 7.1.5 Hệ thống tiến hành kiểm tra quy tắc so khớp.
             isProcessing = true;
+            gameRuleEngine = new GameRuleEngine(currentRoom.getBoardGame());
 
-            if (firstCard.getGroupId() == secondCard.getGroupId()) {
+            if (gameRuleEngine.matchTwoCard(firstCard, secondCard)) {
                 // 7.1.6 Hai thẻ trùng khớp: Cập nhật isMatched = true và cộng điểm.
                 updateCardStateInRoom(currentRoom, firstCard.getId(), true, true);
                 updateCardStateInRoom(currentRoom, secondCard.getId(), true, true);
