@@ -1,6 +1,5 @@
 package com.infix.gamelatthe.data.repository;
 
-import com.google.firebase.firestore.FirebaseFirestore;
 import com.infix.gamelatthe.data.model.multi.MatchHistoryItem;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
@@ -8,14 +7,13 @@ import com.infix.gamelatthe.data.source.remote.RemoteDataSource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class LeaderboardRepository {
 
     private final RemoteDataSource remoteDataSource;
 
     public LeaderboardRepository() {
-        this.remoteDataSource = new RemoteDataSource(FirebaseFirestore.getInstance());
+        this.remoteDataSource = new RemoteDataSource();
     }
 
     public interface HistoryCallback {
@@ -24,63 +22,88 @@ public class LeaderboardRepository {
     }
 
     public void getMatchesByUserUUID(String userUUID, HistoryCallback callback) {
-        remoteDataSource.queryRoomsByUserUUID(userUUID, new RemoteDataSource.FirestoreCallback<List<RoomOnline>>() {
+        remoteDataSource.queryRoomsByUserUUID(userUUID, new RemoteDataSource.RoomQueryCallback() {
             @Override
-            public void onSuccess(List<RoomOnline> roomOnlineList) {
-                if (roomOnlineList == null || roomOnlineList.isEmpty()) {
+            public void onRoomsLoaded(List<RoomOnline> rooms) {
+                if (rooms == null || rooms.isEmpty()) {
                     callback.onHistoryLoaded(new ArrayList<>());
                     return;
                 }
-                // 10.1.5 Chuyển đổi dữ liệu sang danh sách MatchHistoryItem
-                List<MatchHistoryItem> matchHistoryItems = mapToMatchHistoryItems(roomOnlineList, userUUID);
-                callback.onHistoryLoaded(matchHistoryItems);
+
+                List<MatchHistoryItem> historyItems = new ArrayList<>();
+                for (RoomOnline room : rooms) {
+                    String role = determineRole(userUUID, room);
+                    MatchHistoryItem item = mapToMatchHistoryItem(userUUID, room, role);
+                    if (item != null) {
+                        historyItems.add(item);
+                    }
+                }
+                callback.onHistoryLoaded(historyItems);
             }
 
             @Override
-            public void onFailure(String errorMessage) {
-                callback.onError(errorMessage);
+            public void onError(String message) {
+                callback.onError(message);
             }
         });
     }
 
-    private List<MatchHistoryItem> mapToMatchHistoryItems(List<RoomOnline> roomOnlineList, String currentUserUUID) {
-        List<MatchHistoryItem> matchHistoryItems = new ArrayList<>();
-        for (RoomOnline room : roomOnlineList) {
-            MatchHistoryItem item = new MatchHistoryItem();
-            item.setRoomId(room.getRoomId());
-            item.setDifficulty(room.getDifficulty());
-            item.setCreateAt(room.getCreateAt());
-
-            // 10.1.4 Xác định vai trò của người chơi
-            String role = "";
-            String opponentName = "";
-            int userScore = 0;
-            int opponentScore = 0;
-
+    private String determineRole(String userUUID, RoomOnline room) {
+        if (room.getPlayers() != null) {
             for (PlayerOnline player : room.getPlayers()) {
-                if (player.getUuid().equals(currentUserUUID)) {
-                    role = player.getRole();
-                    userScore = player.getScore();
-                } else {
-                    opponentName = player.getName();
-                    opponentScore = player.getScore();
+                if (player.getUuid().equals(userUUID)) {
+                    return player.getRole();
                 }
             }
-            item.setRole(role);
-            item.setOpponentName(opponentName);
-
-            // 10.1.5 Xác định kết quả
-            String result = "DRAW";
-            if (Objects.equals(room.getWinnerId(), currentUserUUID)) {
-                result = "WIN";
-            } else if (room.getWinnerId() != null && !room.getWinnerId().isEmpty()) {
-                result = "LOSE";
-            }
-            item.setResult(result);
-            item.setScore(userScore - opponentScore);
-
-            matchHistoryItems.add(item);
         }
-        return matchHistoryItems;
+        return "UNKNOWN";
+    }
+
+    private MatchHistoryItem mapToMatchHistoryItem(String userUUID, RoomOnline room, String role) {
+        if (room.getPlayers() == null || room.getPlayers().size() < 2 || room.getWinnerId() == null) {
+            return null;
+        }
+
+        PlayerOnline currentPlayer = null;
+        PlayerOnline opponentPlayer = null;
+
+        for (PlayerOnline player : room.getPlayers()) {
+            if (player.getUuid().equals(userUUID)) {
+                currentPlayer = player;
+            } else {
+                opponentPlayer = player;
+            }
+        }
+
+        if (currentPlayer == null || opponentPlayer == null) {
+            return null;
+        }
+
+        String result;
+        if (room.getWinnerId().equals(userUUID)) {
+            result = "WIN";
+        } else if (room.getWinnerId().equals("DRAW")) {
+            result = "DRAW";
+        } else {
+            result = "LOSE";
+        }
+
+        long playTime = 0;
+        if (room.getBoardGame() != null
+                && room.getBoardGame().getTimeEnd() != null
+                && room.getBoardGame().getTimeInit() != null) {
+            playTime = (room.getBoardGame().getTimeEnd() - room.getBoardGame().getTimeInit()) / 1000;
+        }
+
+        return new MatchHistoryItem(
+                room.getRoomId(),
+                room.getDifficulty(),
+                role,
+                opponentPlayer.getName(),
+                result,
+                currentPlayer.getScore(),
+                playTime,
+                room.getCreateAt()
+        );
     }
 }

@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.widget.TextView; // Import TextView
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,6 +28,7 @@ public class OnlineLeaderboardFragment extends Fragment {
     private MatchHistoryAdapter adapter;
     private RecyclerView recyclerView;
     private View emptyStateView;
+    private TextView emptyStateTextView; // Added TextView for empty state message
 
     @Nullable
     @Override
@@ -43,6 +44,7 @@ public class OnlineLeaderboardFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recycler_view_leaderboard);
         emptyStateView = view.findViewById(R.id.empty_state_view);
+        emptyStateTextView = view.findViewById(R.id.empty_state_text); // Initialize emptyStateTextView
 
         setupRecyclerView();
         observeHistory();
@@ -95,7 +97,9 @@ public class OnlineLeaderboardFragment extends Fragment {
     private void showEmptyState(String message) {
         recyclerView.setVisibility(View.GONE);
         emptyStateView.setVisibility(View.VISIBLE);
-        // You would have a TextView in your empty state layout to show the message
-        Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+        if (emptyStateTextView != null) {
+            emptyStateTextView.setText(message); // Set text to the TextView
+        }
+        // Removed Toast.makeText as the message is now displayed in the layout
     }
 }
