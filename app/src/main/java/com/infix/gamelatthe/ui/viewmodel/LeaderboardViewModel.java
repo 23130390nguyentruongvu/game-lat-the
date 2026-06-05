@@ -9,46 +9,40 @@ import com.infix.gamelatthe.data.repository.LeaderboardRepository;
 
 import java.util.List;
 
-
 public class LeaderboardViewModel extends ViewModel {
 
-    private final LeaderboardRepository repository = new LeaderboardRepository();
-
-    private final MutableLiveData<List<MatchHistoryItem>> _matchHistoryList = new MutableLiveData<>();
-    public LiveData<List<MatchHistoryItem>> matchHistoryList = _matchHistoryList;
-
-    private final MutableLiveData<String> _errorState = new MutableLiveData<>();
-    public LiveData<String> errorState = _errorState;
-
-    private final MutableLiveData<Boolean> _isLoading = new MutableLiveData<>();
-    public LiveData<Boolean> isLoading = _isLoading;
-
-    public void fetchUserHistory(String userUUID) {
-        if (userUUID == null || userUUID.isEmpty()) {
-            _errorState.setValue("UUID không hợp lệ");
-            return;
-        }
-
-        _isLoading.setValue(true);
-
-        repository.getMatchesByUserUUID(userUUID).observeForever(matches -> {
-            _isLoading.setValue(false);
-
-            if (matches == null) {
-                _errorState.setValue("Lỗi khi lấy dữ liệu");
-                return;
-            }
-
-            if (matches.isEmpty()) {
-                _matchHistoryList.setValue(matches);
-                return;
-            }
-
-            _matchHistoryList.setValue(matches);
-        });
+    private final LeaderboardRepository repository;
+    private final MutableLiveData<List<MatchHistoryItem>> _matchHistory = new MutableLiveData<>();
+    public LiveData<List<MatchHistoryItem>> getMatchHistory() {
+        return _matchHistory;
     }
 
-    public void clearError() {
-        _errorState.setValue(null);
+    private final MutableLiveData<String> _errorMessage = new MutableLiveData<>();
+    public LiveData<String> getErrorMessage() {
+        return _errorMessage;
+    }
+
+    public LeaderboardViewModel() {
+        repository = new LeaderboardRepository();
+    }
+
+    // 10.1.2 Gửi yêu cầu truy vấn lịch sử thi đấu
+    public void fetchUserHistory(String userUUID) {
+        repository.getMatchesByUserUUID(userUUID, new LeaderboardRepository.HistoryCallback() {
+            @Override
+            public void onHistoryLoaded(List<MatchHistoryItem> history) {
+                if (history.isEmpty()) {
+                    // 10.3.1 Firestore trả về danh sách rỗng
+                    _errorMessage.postValue("Không có lịch sử thi đấu.");
+                } else {
+                    _matchHistory.postValue(history);
+                }
+            }
+
+            @Override
+            public void onError(String message) {
+                _errorMessage.postValue(message);
+            }
+        });
     }
 }

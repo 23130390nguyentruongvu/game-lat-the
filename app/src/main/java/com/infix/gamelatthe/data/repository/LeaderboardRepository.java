@@ -1,148 +1,86 @@
 package com.infix.gamelatthe.data.repository;
 
-import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
-
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.infix.gamelatthe.data.model.multi.MatchHistoryItem;
+import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.data.source.remote.RemoteDataSource;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
-/**
- * Repository quản lý dữ liệu lịch sử trận đấu
- * Gọi RemoteDataSource để lấy dữ liệu từ Firebase
- * Transform RoomOnline → MatchHistoryItem
- */
 public class LeaderboardRepository {
 
-    private final RemoteDataSource remoteDataSource = new RemoteDataSource();
+    private final RemoteDataSource remoteDataSource;
 
-    /**
-     * Lấy danh sách lịch sử trận đấu của người chơi theo UUID
-     * @param userUUID UUID của người chơi
-     * @return LiveData chứa danh sách MatchHistoryItem
-     */
-    public LiveData<List<MatchHistoryItem>> getMatchesByUserUUID(String userUUID) {
-        MutableLiveData<List<MatchHistoryItem>> result = new MutableLiveData<>();
+    public LeaderboardRepository() {
+        this.remoteDataSource = new RemoteDataSource(FirebaseFirestore.getInstance());
+    }
 
-        remoteDataSource.queryRoomsByUserUUID(userUUID, new RemoteDataSource.LeaderboardCallback() {
+    public interface HistoryCallback {
+        void onHistoryLoaded(List<MatchHistoryItem> history);
+        void onError(String message);
+    }
+
+    public void getMatchesByUserUUID(String userUUID, HistoryCallback callback) {
+        remoteDataSource.queryRoomsByUserUUID(userUUID, new RemoteDataSource.FirestoreCallback<List<RoomOnline>>() {
             @Override
-            public void onSuccess(List<RoomOnline> rooms) {
-                if (rooms == null || rooms.isEmpty()) {
-                    result.setValue(new ArrayList<>());
+            public void onSuccess(List<RoomOnline> roomOnlineList) {
+                if (roomOnlineList == null || roomOnlineList.isEmpty()) {
+                    callback.onHistoryLoaded(new ArrayList<>());
                     return;
                 }
-
-                // Transform RoomOnline → MatchHistoryItem
-                List<MatchHistoryItem> matchHistoryList = new ArrayList<>();
-                for (RoomOnline room : rooms) {
-                    MatchHistoryItem item = transformRoomToMatchHistory(room, userUUID);
-                    if (item != null) {
-                        matchHistoryList.add(item);
-                    }
-                }
-
-                // Sort by createAt DESC (mới nhất trước)
-                Collections.sort(matchHistoryList, (a, b) -> {
-                    if (a.getCreateAt() == null || b.getCreateAt() == null) {
-                        return 0;
-                    }
-                    return Long.compare(b.getCreateAt().getTime(), a.getCreateAt().getTime());
-                });
-
-                result.setValue(matchHistoryList);
+                // 10.1.5 Chuyển đổi dữ liệu sang danh sách MatchHistoryItem
+                List<MatchHistoryItem> matchHistoryItems = mapToMatchHistoryItems(roomOnlineList, userUUID);
+                callback.onHistoryLoaded(matchHistoryItems);
             }
 
             @Override
-            public void onFailure(String error) {
-                result.setValue(null);
+            public void onFailure(String errorMessage) {
+                callback.onError(errorMessage);
             }
         });
-
-        return result;
     }
 
-    /**
-     * Chuyển đổi RoomOnline thành MatchHistoryItem
-     * @param room RoomOnline từ Firestore
-     * @param currentUserUUID UUID của người chơi hiện tại
-     * @return MatchHistoryItem hoặc null nếu dữ liệu không hợp lệ
-     */
-    private MatchHistoryItem transformRoomToMatchHistory(RoomOnline room, String currentUserUUID) {
-        if (room.getPlayers() == null || room.getPlayers().size() < 2) {
-            return null;
-        }
+    private List<MatchHistoryItem> mapToMatchHistoryItems(List<RoomOnline> roomOnlineList, String currentUserUUID) {
+        List<MatchHistoryItem> matchHistoryItems = new ArrayList<>();
+        for (RoomOnline room : roomOnlineList) {
+            MatchHistoryItem item = new MatchHistoryItem();
+            item.setRoomId(room.getRoomId());
+            item.setDifficulty(room.getDifficulty());
+            item.setCreateAt(room.getCreateAt());
 
-        // Tìm người chơi hiện tại và đối thủ
-        com.infix.gamelatthe.data.model.multi.PlayerOnline currentPlayer = null;
-        com.infix.gamelatthe.data.model.multi.PlayerOnline opponent = null;
+            // 10.1.4 Xác định vai trò của người chơi
+            String role = "";
+            String opponentName = "";
+            int userScore = 0;
+            int opponentScore = 0;
 
-        for (com.infix.gamelatthe.data.model.multi.PlayerOnline player : room.getPlayers()) {
-            if (player.getUuid().equals(currentUserUUID)) {
-                currentPlayer = player;
-            } else {
-                opponent = player;
+            for (PlayerOnline player : room.getPlayers()) {
+                if (player.getUuid().equals(currentUserUUID)) {
+                    role = player.getRole();
+                    userScore = player.getScore();
+                } else {
+                    opponentName = player.getName();
+                    opponentScore = player.getScore();
+                }
             }
+            item.setRole(role);
+            item.setOpponentName(opponentName);
+
+            // 10.1.5 Xác định kết quả
+            String result = "DRAW";
+            if (Objects.equals(room.getWinnerId(), currentUserUUID)) {
+                result = "WIN";
+            } else if (room.getWinnerId() != null && !room.getWinnerId().isEmpty()) {
+                result = "LOSE";
+            }
+            item.setResult(result);
+            item.setScore(userScore - opponentScore);
+
+            matchHistoryItems.add(item);
         }
-
-        // Nếu không tìm thấy người chơi hiện tại, bỏ qua
-        if (currentPlayer == null || opponent == null) {
-            return null;
-        }
-
-        // Xác định kết quả (WIN/LOSE)
-        String result = determineResult(currentPlayer, opponent, room.getWinnerId());
-
-        // Tính thời gian chơi (nếu có)
-        Long playDuration = null;
-        if (room.getBoardGame() != null && room.getBoardGame().getTimeInit() != null) {
-            long timeInit = room.getBoardGame().getTimeInit();
-            long timeEnd = room.getBoardGame().getTimeEnd() != null ? room.getBoardGame().getTimeEnd() : System.currentTimeMillis();
-            playDuration = timeEnd - timeInit;
-        }
-
-        return new MatchHistoryItem(
-                room.getRoomId(),
-                room.getRoomCode(),
-                room.getDifficulty(),
-                currentPlayer.getRole(),
-                opponent.getName(),
-                opponent.getUuid(),
-                result,
-                currentPlayer.getScore(),
-                opponent.getScore(),
-                room.getCreateAt(),
-                playDuration
-        );
-    }
-
-    /**
-     * Xác định kết quả trận đấu (WIN/LOSE)
-     * @param currentPlayer Người chơi hiện tại
-     * @param opponent Đối thủ
-     * @param winnerId UUID người chiến thắng
-     * @return "WIN" hoặc "LOSE"
-     */
-    private String determineResult(com.infix.gamelatthe.data.model.multi.PlayerOnline currentPlayer,
-                                   com.infix.gamelatthe.data.model.multi.PlayerOnline opponent,
-                                   String winnerId) {
-        // Nếu có winnerId rõ ràng, so sánh
-        if (winnerId != null && !winnerId.isEmpty()) {
-            return winnerId.equals(currentPlayer.getUuid()) ? "WIN" : "LOSE";
-        }
-
-        // Nếu không, so sánh score
-        if (currentPlayer.getScore() > opponent.getScore()) {
-            return "WIN";
-        } else if (currentPlayer.getScore() < opponent.getScore()) {
-            return "LOSE";
-        } else {
-            // Cân bằng điểm - có thể coi là WIN/LOSE tùy logic
-            // Ở đây coi là LOSE
-            return "LOSE";
-        }
+        return matchHistoryItems;
     }
 }
