@@ -389,4 +389,15 @@ public class RemoteDataSource {
                 })
                 .addOnFailureListener(e -> callback.onError(e.getMessage())); // Đổi onFailure thành onError
     }
+
+    public void finishGameOnline(RoomOnline room, RoomOnlineListener listener){
+        // 9.1.7 Hệ thống lưu dữ liệu lịch sử trận đấu lên Firestore
+        firestore.collection("rooms")
+                .document(room.getRoomId())
+                .set(room)
+                .addOnSuccessListener(unused ->
+                        listener.onSuccess("Success"))
+                .addOnFailureListener(e ->
+                        listener.onFailure());
+    }
 }

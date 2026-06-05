@@ -51,5 +51,8 @@ public class GameRepository {
     public void updateBoardAndTurn(RoomOnline roomOnline) {
         gamePlayOnlineDataSource.updateBoardAndTurn(roomOnline);
     }
-
+    public void finishGameOnline(RoomOnline room, RoomOnlineListener listener){
+        // 9.1.6 Repository chuyển yêu cầu lưu lịch sử đến RemoteDataSource
+        remoteDataSource.finishGameOnline(room, listener);
+    }
 }

@@ -29,8 +29,7 @@ public class OnlineBoardGameViewModel extends ViewModel {
         }
     }
 
-     // [8.1.1] Hệ thống tự động kích hoạt kiểm tra điều kiện đóng ván đấu khi có thẻ được lật trúng
-
+   /*  // [8.1.1] Hệ thống tự động kích hoạt kiểm tra điều kiện đóng ván đấu khi có thẻ được lật trúng
     public void checkGameEndCondition(RoomOnline room) {
         if (room == null || ruleEngine == null) return;
 
@@ -42,5 +41,52 @@ public class OnlineBoardGameViewModel extends ViewModel {
 
 
         }
-    }
+    }  */
+
+   public void checkGameEndCondition(RoomOnline room) {
+
+       // 9.1.1 ViewModel nhận dữ liệu trạng thái trận đấu từ View
+       if(room == null || ruleEngine == null){
+           return;
+       }
+
+       // 9.1.2 ViewModel kiểm tra điều kiện kết thúc trận đấu
+       if(ruleEngine.checkOnlineEndGame(room)){
+
+           // 9.1.3 ViewModel xác định người thắng cuộc
+           String winnerId =
+                   ruleEngine.calculateOnlineWinner(room);
+
+           // 9.1.4 ViewModel tạo dữ liệu lịch sử trận đấu
+           room.setWinnerId(winnerId);
+           room.setStatus("FINISHED");
+
+           if(room.getBoardGame() != null){
+               room.getBoardGame().setTimeEnd(
+                       System.currentTimeMillis()
+               );
+           }
+
+           // 9.1.5 ViewModel yêu cầu Repository lưu lịch sử trận đấu
+           repository.finishGameOnline(
+                   room,
+                   new RoomOnlineListener() {
+
+                       @Override
+                       public void onSuccess(String message) {
+
+                           // 9.1.8 ViewModel nhận kết quả lưu thành công
+                           _gameOverEvent.postValue(winnerId);
+                       }
+
+                       @Override
+                       public void onFailure() {
+
+                           // 9.2.2 Hệ thống thông báo lỗi lưu lịch sử trận đấu
+                           _networkError.postValue(true);
+                       }
+                   }
+           );
+       }
+   }
 }
