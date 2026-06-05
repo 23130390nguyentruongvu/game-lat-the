@@ -3,8 +3,11 @@ package com.infix.gamelatthe.ui.viewmodel;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.data.model.Card;
 import com.infix.gamelatthe.data.model.multi.CardOnline;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
@@ -22,6 +25,11 @@ public class OnlineBoardGameViewModel extends ViewModel {
     private CardOnline firstCard = null;
     private CardOnline secondCard = null;
     private boolean isProcessing = false;
+    private final MutableLiveData<String> _gameOverEvent = new MutableLiveData<>();
+    public LiveData<String> gameOverEvent = _gameOverEvent;
+
+    private final MutableLiveData<Boolean> _networkError = new MutableLiveData<>();
+    public LiveData<Boolean> networkError = _networkError;
 
     public void onCardClick(CardOnline clickedCard, RoomOnline currentRoom, String currentUserId) {
         if (isProcessing) return;
@@ -132,8 +140,41 @@ public class OnlineBoardGameViewModel extends ViewModel {
     }
 
     public void checkEndGameOnline(RoomOnline currentRoom) {
+        if (currentRoom == null) return;
+        gameRuleEngine = new GameRuleEngine(currentRoom.getBoardGame());
+
+        // [8.1.2] Nếu lật hết bài
+        if (gameRuleEngine.checkOnlineEndGame(currentRoom)) {
+            // [8.1.3] Tính người thắng
+            String winnerId = gameRuleEngine.calculateOnlineWinner(currentRoom);
+            executeEndGameSequence(currentRoom, "FINISHED", winnerId);
+        }
     }
 
-    public void processEndGameResult(RoomOnline currentRoom) {
+    public void abandonGame(String currentUserId, RoomOnline currentRoom) {
+        if (currentRoom == null || currentRoom.getPlayers() == null) return;
+        String winnerId = "";
+        for (PlayerOnline p : currentRoom.getPlayers()) {
+            if (!p.getUuid().equals(currentUserId)) {
+                winnerId = p.getUuid();
+                break;
+            }
+        }
+        executeEndGameSequence(currentRoom, "ABANDONED", winnerId);
+    }
+
+    private void executeEndGameSequence(RoomOnline room, String status, String winnerId) {
+        gameRepository.endRoomOnline(room.getRoomId(), status, winnerId, new RoomOnlineListener() {
+            @Override
+            public void onSuccess(String message) {
+                gameRepository.stopListeningToRoom(); // [8.1.8] Hủy lắng nghe
+                _gameOverEvent.postValue(winnerId);   // [8.1.9] Báo Fragment hiện Dialog
+            }
+
+            @Override
+            public void onFailure() {
+                _networkError.postValue(true); // [8.3] Báo lỗi rớt mạng
+            }
+        });
     }
 }
