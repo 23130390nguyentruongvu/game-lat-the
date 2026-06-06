@@ -236,6 +236,7 @@ public class LobbyRoomFragment extends Fragment {
     }
 
     private void navigateToBoardGameOnline(RoomOnline room) {
+        Log.d("LIL", room.toString());
         showMessage("Bắt đầu game");
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()

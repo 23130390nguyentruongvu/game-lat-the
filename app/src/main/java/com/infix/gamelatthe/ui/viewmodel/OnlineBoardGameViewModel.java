@@ -2,12 +2,14 @@ package com.infix.gamelatthe.ui.viewmodel;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.widget.Toast;
 
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
 import com.infix.gamelatthe.common.RoomOnlineListener;
+import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.data.model.Card;
 import com.infix.gamelatthe.data.model.multi.CardOnline;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
@@ -33,6 +35,10 @@ public class OnlineBoardGameViewModel extends ViewModel {
     private final MutableLiveData<Boolean> _networkError = new MutableLiveData<>();
     public LiveData<Boolean> networkError = _networkError;
 
+
+    private final MutableLiveData<RoomOnline> _roomOnline = new MutableLiveData<>();
+    public LiveData<RoomOnline> roomOnline = _roomOnline;
+
     public void onCardClick(CardOnline clickedCard, RoomOnline currentRoom, String currentUserId) {
         if (isProcessing) return;
 
@@ -44,11 +50,12 @@ public class OnlineBoardGameViewModel extends ViewModel {
             return;
         }
 
-        if (clickedCard.isFlipped() || clickedCard.isMatched()) return;
+        if (clickedCard.isFlipped() || clickedCard.isMatched()) {return;}
 
         if (firstCard == null && secondCard == null) {
             // 7.1.0 Người chơi chạm vào một thẻ đang úp trên giao diện bàn cờ.
             firstCard = clickedCard;
+           // updateFirstCardInRoom(currentRoom, clickedCard.getId(), true);
             updateCardStateInRoom(currentRoom, clickedCard.getId(), true, false);
 
             // 7.1.2 Hệ thống đẩy lệnh cập nhật lên Firestore (isFlipped = true).
@@ -102,6 +109,25 @@ public class OnlineBoardGameViewModel extends ViewModel {
         }
     }
 
+    private void updateFirstCardInRoom(RoomOnline currentRoom, int cardId, boolean isFlipped) {
+        currentRoom.getBoardGame().setCardIsFlipped(cardId, isFlipped);
+    }
+
+
+    public void startListeningToRoomByCode(String roomCode) {
+        gameRepository.startListeningToRoomByCode(roomCode, new RoomSnapshotCallback() {
+            @Override
+            public void onDataChanged(RoomOnline room) {
+                _roomOnline.setValue(room);
+            }
+
+            @Override
+            public void onError(Exception e) {
+
+            }
+        });
+    }
+
     private void updateCardStateInRoom(RoomOnline room, int cardId, boolean isFlipped, boolean isMatched) {
         if (room.getBoardGame() == null || room.getBoardGame().getCards() == null) return;
         List<Card> cards = room.getBoardGame().getCards();
@@ -114,6 +140,10 @@ public class OnlineBoardGameViewModel extends ViewModel {
                 break;
             }
         }
+    }
+
+    public void setRoomOnline(RoomOnline room) {
+        _roomOnline.setValue(room);
     }
 
     private void addScoreForPlayer(RoomOnline room, String currentUserId) {

@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 
+import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.data.model.multi.CardOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.databinding.FragmentOnlineBoardGameBinding;
@@ -29,14 +30,16 @@ public class OnlineBoardGameFragment extends Fragment {
     private FragmentOnlineBoardGameBinding binding;
     private static final String ARG_ROOM_ONLINE = "ARG_ROOM_ONLINE";
 
-    private RoomOnline roomOnline;
     private LobbyRoomViewModel lobbyRoomViewModel;
     private OnlineBoardGameViewModel onlineBoardGameViewModel;
     private BoardGameAdapter boardGameAdapter;
     private String currentUserId;
 
+    private RoomOnline roomOnline;
+
     // Thêm cờ để khóa bàn cờ theo bước 8.1.9
     private boolean isGameOver = false;
+
     public static OnlineBoardGameFragment newInstance(RoomOnline roomOnline) {
         OnlineBoardGameFragment fragment = new OnlineBoardGameFragment();
         Bundle args = new Bundle();
@@ -85,11 +88,14 @@ public class OnlineBoardGameFragment extends Fragment {
             if (isGameOver) return;
             if (card instanceof CardOnline && roomOnline != null) {
                 if (roomOnline.getCurrentTurn() != null && !roomOnline.getCurrentTurn().equals(currentUserId)) {
+                    Log.d("SKU", roomOnline.getCurrentTurn() + " " + currentUserId);
                     // 7.3.3 Hiển thị Toast cảnh báo "Chưa tới lượt của bạn!".
                     Toast.makeText(requireContext(), "Chưa tới lượt của bạn!", Toast.LENGTH_SHORT).show();
+                    return;
                 }
-            // 8.1.0: Người chơi thực hiện click và lật thành công cặp bài
-                onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);            }
+                // 8.1.0: Người chơi thực hiện click và lật thành công cặp bài
+                onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);
+            }
         });
 
         binding.rvBoardGame.setLayoutManager(new GridLayoutManager(requireContext(), 4));
@@ -101,7 +107,8 @@ public class OnlineBoardGameFragment extends Fragment {
     }
 
     private void observeRoomData() {
-        lobbyRoomViewModel.roomData.observe(getViewLifecycleOwner(), room -> {
+        onlineBoardGameViewModel.startListeningToRoomByCode(roomOnline.getRoomCode());
+        onlineBoardGameViewModel.roomOnline.observe(getViewLifecycleOwner(), room -> {
             if (room != null && room.getBoardGame() != null) {
                 this.roomOnline = room;
 
@@ -121,7 +128,10 @@ public class OnlineBoardGameFragment extends Fragment {
         onlineBoardGameViewModel.networkError.observe(getViewLifecycleOwner(), isError -> {
             if (isError != null && isError) showNetworkErrorDialog();
         });
+
+
     }
+
 
     @Override
     public void onDestroyView() {
@@ -145,11 +155,14 @@ public class OnlineBoardGameFragment extends Fragment {
     private void showGameOverDialog(String winnerId) {
         String title, msg;
         if ("DRAW".equals(winnerId)) {
-            title = "KẾT QUẢ HÒA!"; msg = "Cả hai đều có số điểm bằng nhau!";
+            title = "KẾT QUẢ HÒA!";
+            msg = "Cả hai đều có số điểm bằng nhau!";
         } else if (currentUserId.equals(winnerId)) {
-            title = "CHIẾN THẮNG! 🎉"; msg = "Bạn đã giành chiến thắng!";
+            title = "CHIẾN THẮNG! 🎉";
+            msg = "Bạn đã giành chiến thắng!";
         } else {
-            title = "THUA CUỘC 😢"; msg = "Đối thủ đã giành chiến thắng!";
+            title = "THUA CUỘC 😢";
+            msg = "Đối thủ đã giành chiến thắng!";
         }
 
         new AlertDialog.Builder(requireContext())
