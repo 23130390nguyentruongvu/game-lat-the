@@ -1,5 +1,7 @@
 package com.infix.gamelatthe.data.source.remote;
 
+import android.util.Log;
+
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -131,10 +133,10 @@ public class RemoteDataSource {
                 .whereEqualTo("status", StatusRoomOnlineEnum.WAITING.name())
                 .get()
                 .addOnCompleteListener(task -> {
-                    //-	Mã phòng không tồn tại: (Rẽ nhánh từ bước 6.2.3 khi hệ thống kiểm tra mã phòng từ Firebase)
+                    //- Mã phòng không tồn tại: (Rẽ nhánh từ bước 6.2.3 khi hệ thống kiểm tra mã phòng từ Firebase)
                     //6.4.1 Hệ thống quét cơ sở dữ liệu Firestore và phát hiện ra một trong các sự cố sau:
-                    //	Mã phòng nhập vào không tồn tại trên hệ thống dữ liệu.
-                    //	Phòng đấu tương ứng đã đủ 2 người chơi (Trạng thái phòng khác "WAITING").
+                    // Mã phòng nhập vào không tồn tại trên hệ thống dữ liệu.
+                    // Phòng đấu tương ứng đã đủ 2 người chơi (Trạng thái phòng khác "WAITING").
                     if (task.isSuccessful() && task.getResult() != null) {
                         if (task.getResult().isEmpty()) {
                             roomOnlineListener.onFailure();
@@ -194,10 +196,48 @@ public class RemoteDataSource {
                     }
 
                     if (snapshot != null && !snapshot.isEmpty()) {
-                        RoomOnline room = snapshot.getDocuments().get(0).toObject(RoomOnline.class);
-                        if (room != null) {
-                            callback.onDataChanged(room);
+                        DocumentSnapshot roomDoc = snapshot.getDocuments().get(0);
+                        RoomOnline room = roomDoc.toObject(RoomOnline.class);
+
+                        if (room != null && room.getBoardGame() != null) {
+                            try {
+                                // [7.1.3] Trình lắng nghe nhận sự kiện từ Firestore.
+                                // Cấu trúc lại dữ liệu mảng thẻ bài thành CardOnline để bảo toàn thuộc tính isMatched.
+                                Map<String, Object> rawData = roomDoc.getData();
+                                if (rawData != null && rawData.containsKey("boardGame")) {
+                                    Map<String, Object> boardData = (Map<String, Object>) rawData.get("boardGame");
+                                    if (boardData != null && boardData.containsKey("cards")) {
+                                        List<Map<String, Object>> rawCards = (List<Map<String, Object>>) boardData.get("cards");
+
+                                        List<Card> reconstructedCards = new ArrayList<>();
+                                        for (Map<String, Object> map : rawCards) {
+                                            int id = ((Long) map.get("id")).intValue();
+                                            int idType = ((Long) map.get("idType")).intValue();
+                                            String urlImage = (String) map.get("urlImage");
+
+                                            boolean isFlipped = map.containsKey("flipped") && (Boolean) map.get("flipped");
+                                            boolean isEnable = map.containsKey("enable") && (Boolean) map.get("enable");
+
+                                            CardOnline cOnline = new CardOnline(id, idType, urlImage, isFlipped);
+                                            cOnline.setEnable(isEnable);
+
+                                            if (map.containsKey("matched")) {
+                                                cOnline.setMatched((Boolean) map.get("matched"));
+                                            }
+
+                                            reconstructedCards.add(cOnline);
+                                        }
+
+                                        room.getBoardGame().setCards(reconstructedCards);
+                                    }
+                                }
+                            } catch (Exception e) {
+                                Log.e("RemoteDataSource", "Lỗi cấu trúc lại CardOnline: " + e.getMessage());
+                            }
                         }
+
+                        callback.onDataChanged(room);
+
                     } else if (snapshot != null && snapshot.isEmpty()) {
                         callback.onDataChanged(null);
                     }
@@ -233,7 +273,7 @@ public class RemoteDataSource {
 
                         //6.3.2 Hệ thống tiến hành cập nhật lại trạng thái trên cơ sở dữ liệu Firebase Firestore:
                         if (targetPlayer.getUuid().equals(uuid)) {
-                            //	Nếu là Host rời phòng: Hệ thống xóa hoàn toàn document của phòng đó trên Firestore.
+                            // Nếu là Host rời phòng: Hệ thống xóa hoàn toàn document của phòng đó trên Firestore.
                             if (UserRole.HOST.role.equals(targetPlayer.getRole())) {
                                 db.collection("rooms")
                                         .document(docId)
@@ -245,7 +285,7 @@ public class RemoteDataSource {
                                             roomOnlineListener.onFailure();
                                         });
                             }
-                            //	Nếu là Guest rời phòng: Hệ thống xóa thông tin của
+                            // Nếu là Guest rời phòng: Hệ thống xóa thông tin của
                             // Guest ra khỏi document phòng, chuyển trạng thái phòng quay lại
                             // thành "WAITING". Thiết bị của Host nhận được sự kiện cập nhật sẽ ẩn thông
                             // tin Guest đi và tiếp tục chờ người mới.
