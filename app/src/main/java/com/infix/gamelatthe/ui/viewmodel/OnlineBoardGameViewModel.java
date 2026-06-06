@@ -67,11 +67,12 @@ public class OnlineBoardGameViewModel extends ViewModel {
             secondCard = clickedCard;
             updateCardStateInRoom(currentRoom, clickedCard.getId(), true, false);
 
+            isProcessing = true;
+
             // 7.1.4 Cập nhật isFlipped = true cho thẻ thứ 2.
             gameRepository.updateBoardAndTurn(currentRoom);
 
             // 7.1.5 Hệ thống tiến hành kiểm tra quy tắc so khớp.
-            isProcessing = true;
             gameRuleEngine = new GameRuleEngine(currentRoom.getBoardGame());
 
             if (gameRuleEngine.matchTwoCard(firstCard, secondCard)) {
