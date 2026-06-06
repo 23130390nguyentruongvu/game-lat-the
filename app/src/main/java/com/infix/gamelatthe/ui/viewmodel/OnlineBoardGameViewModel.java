@@ -18,9 +18,17 @@ import com.infix.gamelatthe.ui.GameRuleEngine;
 import java.util.List;
 
 public class OnlineBoardGameViewModel extends ViewModel {
-    private final GameRepository gameRepository = new GameRepository();
+    private final GameRepository gameRepository;
     private GameRuleEngine gameRuleEngine;
     private final Handler handler = new Handler(Looper.getMainLooper());
+
+    public OnlineBoardGameViewModel() {
+        this.gameRepository = new GameRepository();
+    }
+
+    public OnlineBoardGameViewModel(GameRepository repository) {
+        this.gameRepository = repository;
+    }
 
     private CardOnline firstCard = null;
     private CardOnline secondCard = null;
@@ -167,13 +175,16 @@ public class OnlineBoardGameViewModel extends ViewModel {
         gameRepository.endRoomOnline(room.getRoomId(), status, winnerId, new RoomOnlineListener() {
             @Override
             public void onSuccess(String message) {
-                gameRepository.stopListeningToRoom(); // [8.1.8] Hủy lắng nghe
-                _gameOverEvent.postValue(winnerId);   // [8.1.9] Báo Fragment hiện Dialog
+                // [8.1.8] Hủy lắng nghe
+                gameRepository.stopListeningToRoom();
+                // [8.1.9] Báo Fragment hiện Dialog
+                _gameOverEvent.postValue(winnerId);
             }
 
             @Override
             public void onFailure() {
-                _networkError.postValue(true); // [8.3] Báo lỗi rớt mạng
+                // [8.3] Báo lỗi rớt mạng
+                _networkError.postValue(true);
             }
         });
     }
