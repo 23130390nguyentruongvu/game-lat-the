@@ -178,7 +178,15 @@ public class OnlineBoardGameFragment extends Fragment {
                 .setPositiveButton("Quay về Lobby", (dialog, which) -> {
                     requireActivity().getSupportFragmentManager().popBackStack();
                 })
-                .setCancelable(false).show();
+                .setNegativeButton("Màn hình chính", (dialog, which) -> {
+                    android.content.Intent intent = new android.content.Intent(requireActivity(), MainActivity.class);
+                    // Lệnh này giúp xóa sạch lịch sử các màn hình cũ, tránh lỗi bấm nút Back trên điện thoại bị quay ngược lại game
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    requireActivity().finish();
+                })
+                .setCancelable(false) // Bắt buộc người chơi phải chọn 1 trong 2 nút
+                .show();
     }
 
     private void showNetworkErrorDialog() {
