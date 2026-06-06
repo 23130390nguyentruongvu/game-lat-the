@@ -291,8 +291,9 @@ public class RemoteDataSource {
                     }
 
                     DocumentSnapshot roomDocSnap = roomTask.getResult().getDocuments().get(0);
-                    String roomId = roomDocSnap.getId();
-                    RoomOnline roomOnline = roomDocSnap.toObject(RoomOnline.class);
+//                    String roomId = roomDocSnap.getId();
+                    RoomOnline roomOnline = parseRoomOnlineManual(roomDocSnap);
+//                    RoomOnline roomOnline = roomDocSnap.toObject(RoomOnline.class);
 
                     if (roomOnline == null || roomOnline.getPlayers() == null || roomOnline.getPlayers().isEmpty()) {
                         roomOnlineListener.onFailure();
@@ -348,7 +349,7 @@ public class RemoteDataSource {
                                 updates.put("currentTurn", firstTurnPlayerId);
                                 updates.put("status", StatusRoomOnlineEnum.PLAYING.name());
 
-                                db.collection("rooms").document(roomId)
+                                db.collection("rooms").document(roomDocSnap.getId())
                                         .update(updates)
                                         .addOnSuccessListener(aVoid -> {
                                             roomOnlineListener.onSuccess("Trận đấu bắt đầu!");
