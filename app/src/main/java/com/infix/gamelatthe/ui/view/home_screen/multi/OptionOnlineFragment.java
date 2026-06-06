@@ -49,8 +49,8 @@ public class OptionOnlineFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setEvent();
-        registerObserver();
         initHomeViewModel();
+        registerObserver();
     }
 
     @Override
@@ -101,6 +101,7 @@ public class OptionOnlineFragment extends Fragment {
     }
 
     private void showMessage(String msg) {
+        if(msg == null) return;
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
     }
 
@@ -165,6 +166,11 @@ public class OptionOnlineFragment extends Fragment {
                 return;
             }
 
+            if (Boolean.FALSE.equals(homeViewModel.isNetworkValid.getValue())) {
+                showMessage("Mạng không khả dụng");
+                return;
+            }
+
             PlayerOnline playerOnline = new PlayerOnline(
                     uuid,
                     displayName,
@@ -179,12 +185,12 @@ public class OptionOnlineFragment extends Fragment {
                     selectedDifficulty[0],
                     new RoomOnlineListener() {
                         @Override
-                        public void onSuccess(String roomCode) {
+                        public void onSuccess(String message) {
                             //6.1.6 Hệ thống hiển thị giao diện Phòng chờ, công khai mã
                             // phòng ra màn hình và hiển thị trạng thái "Đang chờ đối thủ tham gia...".
                             requireActivity().getSupportFragmentManager()
                                     .beginTransaction()
-                                    .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.HOST.role, roomCode))
+                                    .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.HOST.role, message))
                                     .addToBackStack(null)
                                     .commit();
                         }
@@ -245,6 +251,12 @@ public class OptionOnlineFragment extends Fragment {
                 showMessage("Uuid chưa tồn tại");
                 return;
             }
+
+            if (Boolean.FALSE.equals(homeViewModel.isNetworkValid.getValue())) {
+                showMessage("Mạng không khả dụng");
+                return;
+            }
+
             PlayerOnline playerOnline = new PlayerOnline(
                     uuid,
                     guestName,
@@ -255,12 +267,12 @@ public class OptionOnlineFragment extends Fragment {
 
             homeViewModel.enterRoomOnline(playerOnline, roomCode, new RoomOnlineListener() {
                 @Override
-                public void onSuccess(String roomCode) {
+                public void onSuccess(String message) {
                     //6.2.5 Hệ thống chuyển hướng thiết bị
                     // Guest vào màn hình Phòng chờ hiển thị thông tin của Host và trạng thái "Chờ chủ phòng bắt đầu trận đấu".
                     requireActivity().getSupportFragmentManager()
                             .beginTransaction()
-                            .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.GUEST.role, roomCode))
+                            .replace(R.id.fcv_main, LobbyRoomFragment.newInstance(UserRole.GUEST.role, message))
                             .addToBackStack(null)
                             .commit();
                 }

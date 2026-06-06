@@ -32,8 +32,6 @@ import java.util.List;
 
 public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
-    private Button btnStartGame;
-    private Button btnHistory;
 
     private HomeViewModel homeViewModel;
     private BoardGameViewModel boardGameViewModel;
@@ -61,32 +59,12 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         initEvents();
         initViewModels();
-        registerObserver();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        unregisterObserver();
-    }
-
-    private void registerObserver() {
-        try {
-            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
-            myApplication.registerObserver(homeViewModel);
-        } catch (Exception e) {
-            Log.e("SVU", e.getMessage());
-        }
-    }
-
-    private void unregisterObserver() {
-        try {
-            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
-            myApplication.removeObserver(homeViewModel);
-        } catch (Exception e) {
-            Log.e("SVU", e.getMessage());
-        }
     }
 
     private void initEvents() {

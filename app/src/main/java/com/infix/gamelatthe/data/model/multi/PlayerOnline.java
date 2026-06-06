@@ -1,6 +1,6 @@
 package com.infix.gamelatthe.data.model.multi;
 
-import com.infix.gamelatthe.common.UserRole;
+import java.util.Objects;
 
 public class PlayerOnline {
     private String uuid, name;
@@ -37,5 +37,20 @@ public class PlayerOnline {
 
     public String getRole() {
         return role;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof PlayerOnline)) return false;
+        PlayerOnline that = (PlayerOnline) o;
+        return getScore() == that.getScore() && isReady() == that.isReady() && Objects.equals(getUuid(), that.getUuid()) && Objects.equals(getName(), that.getName()) && Objects.equals(getRole(), that.getRole());
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(getUuid(), getName(), getScore(), isReady(), getRole());
+    }
+    public void setScore(int score) {
+        this.score = score;
     }
 }

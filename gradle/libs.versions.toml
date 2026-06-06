@@ -11,6 +11,7 @@ appcompat = "1.7.1"
 material = "1.13.0"
 activity = "1.13.0"
 constraintlayout = "2.2.1"
+mockitoCore = "5.11.0"
 roomCompiler = "2.6.1"
 roomRuntime = "2.6.1"
 roomTesting = "2.6.1"
@@ -19,6 +20,7 @@ cardview = "1.0.0"
 recyclerview = "1.4.0"
 navigationFragment = "2.9.8"
 lifecycleViewmodel = "2.10.0"
+fragmentTesting = "1.8.9"
 
 [libraries]
 core-testing = { module = "androidx.arch.core:core-testing", version.ref = "coreTesting" }
@@ -32,6 +34,7 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 activity = { group = "androidx.activity", name = "activity", version.ref = "activity" }
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockitoCore" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
 room-testing = { module = "androidx.room:room-testing", version.ref = "roomTesting" }
@@ -40,6 +43,7 @@ cardview = { group = "androidx.cardview", name = "cardview", version.ref = "card
 recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "lifecycleViewmodel" }
+fragment-testing = { group = "androidx.fragment", name = "fragment-testing", version.ref = "fragmentTesting" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
