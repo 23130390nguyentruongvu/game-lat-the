@@ -61,7 +61,7 @@ public class GameRepository {
         remoteDataSource.stopListening();
     }
 
-    ublic void updateMatchHistory(RoomOnline roomOnline, RoomOnlineListener listener) {
+    public void updateMatchHistory(RoomOnline roomOnline, RoomOnlineListener listener) {
         // 9.1.3 Repository tiếp nhận yêu cầu cập nhật
         gamePlayOnlineDataSource
                 .updateMatchHistory(
