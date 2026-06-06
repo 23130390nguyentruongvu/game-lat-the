@@ -73,4 +73,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel:2.6.2")
     implementation("androidx.navigation:navigation-fragment:2.7.7")
     implementation("androidx.navigation:navigation-ui:2.7.7")
+    testImplementation("junit:junit:4.13.2")
+// Thư viện giả lập đối tượng (Mock) để chặn các lệnh gọi lên Firebase
+    testImplementation("org.mockito:mockito-core:5.3.1")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
+// Thư viện hỗ trợ test LiveData bất đồng bộ trong Android
+    testImplementation("androidx.arch.core:core-testing:2.2.0")
 }
