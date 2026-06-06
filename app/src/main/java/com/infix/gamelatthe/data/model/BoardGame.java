@@ -2,6 +2,7 @@ package com.infix.gamelatthe.data.model;
 
 import com.google.firebase.firestore.Exclude;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class BoardGame {
@@ -17,6 +18,15 @@ public class BoardGame {
     public BoardGame() {}
     public List<Card> getCards() {
         return cards;
+    }
+
+    @Override
+    public String toString() {
+        return "BoardGame{" +
+                "cards=" + Arrays.toString(cards.toArray()) +
+                ", timeInit=" + timeInit +
+                ", timeEnd=" + timeEnd +
+                '}';
     }
 
     // 3.1.3 Kiểm tra trạng thái tất cả các thẻ
