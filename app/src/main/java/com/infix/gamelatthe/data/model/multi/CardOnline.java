@@ -19,4 +19,12 @@ public class CardOnline extends Card {
     public void setMatched(boolean matched) {
         isMatched = matched;
     }
+
+    @Override
+    public String toString() {
+        return "CardOnline{" +
+                super.toString() +" =>" +
+                "isMatched=" + isMatched +
+                '}';
+    }
 }
