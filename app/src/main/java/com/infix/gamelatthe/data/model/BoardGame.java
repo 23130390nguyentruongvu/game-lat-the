@@ -14,8 +14,11 @@ public class BoardGame {
         this.cards = cards;
         this.timeInit = timeInit;
     }
+
     // UC1.7.1 - init BoardGame
-    public BoardGame() {}
+    public BoardGame() {
+    }
+
     public List<Card> getCards() {
         return cards;
     }
@@ -38,15 +41,28 @@ public class BoardGame {
         }
         return true;
     }
+
     // 3.1.5 Tính thời gian hoàn thành
     public long calcTimeFinish() {
         return timeEnd - timeInit;
     }
 
+    public void setCardIsFlipped(int cardId, boolean isFlipped) {
+        for (Card card : cards) {
+            if (card.getId() == cardId) {
+                card.setFlipped(isFlipped);
+                break;
+            }
+        }
+    }
+
     public void setTimeEnd(Long timeEnd) {
         this.timeEnd = timeEnd;
     }
-    public void setTimeInit(Long timeInit) { this.timeInit = timeInit;}
+
+    public void setTimeInit(Long timeInit) {
+        this.timeInit = timeInit;
+    }
 
     @Exclude
     public Long getTimeInit() {

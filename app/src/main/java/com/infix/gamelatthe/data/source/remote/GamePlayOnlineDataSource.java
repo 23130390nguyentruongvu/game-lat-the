@@ -4,18 +4,55 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class GamePlayOnlineDataSource {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     public void updateBoardAndTurn(RoomOnline roomOnline) {
-        if (roomOnline == null || roomOnline.getRoomId() == null) return;
+        if (roomOnline == null || roomOnline.getRoomId() == null || roomOnline.getBoardGame() == null) return;
 
-        db.collection("rooms")
-                .document(roomOnline.getRoomId())
-                .set(roomOnline);
+        try {
+            List<Map<String, Object>> cardsMapList = new ArrayList<>();
+
+            for (com.infix.gamelatthe.data.model.Card cardAbstract : roomOnline.getBoardGame().getCards()) {
+                Map<String, Object> cardMap = new HashMap<>();
+                cardMap.put("id", cardAbstract.getId());
+                cardMap.put("groupId", cardAbstract.getGroupId());
+                cardMap.put("urlImage", cardAbstract.getUrlImage());
+                cardMap.put("flipped", cardAbstract.isFlipped());
+                cardMap.put("enable", cardAbstract.isEnable());
+
+                if (cardAbstract instanceof com.infix.gamelatthe.data.model.multi.CardOnline) {
+                    com.infix.gamelatthe.data.model.multi.CardOnline cardOnline = (com.infix.gamelatthe.data.model.multi.CardOnline) cardAbstract;
+                    cardMap.put("matched", cardOnline.isMatched());
+                } else {
+                    cardMap.put("matched", false);
+                }
+                cardsMapList.add(cardMap);
+            }
+
+            Map<String, Object> updates = new HashMap<>();
+            updates.put("currentTurn", roomOnline.getCurrentTurn());
+            updates.put("status", roomOnline.getStatus());
+            updates.put("winnerId", roomOnline.getWinnerId());
+            updates.put("boardGame.cards", cardsMapList);
+
+            db.collection("rooms")
+                    .document(roomOnline.getRoomId())
+                    .update(updates)
+                    .addOnSuccessListener(aVoid -> {
+                    })
+                    .addOnFailureListener(e -> {
+                        e.printStackTrace();
+                    });
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     public void endRoomOnline(String roomId, String finalStatus, String winnerId, RoomOnlineListener roomOnlineListener) {
         Map<String, Object> updates = new HashMap<>();
