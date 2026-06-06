@@ -3,12 +3,27 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#FFFFFF"
     tools:context=".ui.view.board_game_screen.multi.OnlineBoardGameFragment">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
+    <ImageView
+        android:id="@+id/ivBack"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Thoát trận"
+        android:padding="8dp"
+        android:src="@android:drawable/ic_menu_revert" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvBoardGame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="@string/hello_blank_fragment" />
+        android:layout_gravity="center"
+        android:contentDescription="Bàn cờ game lật thẻ trực tuyến"
+        android:padding="8dp"
+        tools:listitem="@layout/item_card" />
 
 </FrameLayout>

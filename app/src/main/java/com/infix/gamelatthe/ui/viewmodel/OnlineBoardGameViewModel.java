@@ -3,23 +3,35 @@ package com.infix.gamelatthe.ui.viewmodel;
 import android.os.Handler;
 import android.os.Looper;
 
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
+import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.data.model.Card;
 import com.infix.gamelatthe.data.model.multi.CardOnline;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.data.repository.GameRepository;
+import com.infix.gamelatthe.ui.GameRuleEngine;
 
 import java.util.List;
 
 public class OnlineBoardGameViewModel extends ViewModel {
     private final GameRepository gameRepository = new GameRepository();
+    private GameRuleEngine gameRuleEngine;
     private final Handler handler = new Handler(Looper.getMainLooper());
 
     private CardOnline firstCard = null;
     private CardOnline secondCard = null;
     private boolean isProcessing = false;
+
+    // Đã fix chuẩn kiến trúc MVVM: _ (Mutable) dùng để ghi, không _ (LiveData) dùng để đọc
+    private final MutableLiveData<String> _gameOverEvent = new MutableLiveData<>();
+    public LiveData<String> gameOverEvent = _gameOverEvent;
+
+    private final MutableLiveData<Boolean> _networkError = new MutableLiveData<>();
+    public LiveData<Boolean> networkError = _networkError;
 
     public void onCardClick(CardOnline clickedCard, RoomOnline currentRoom, String currentUserId) {
         if (isProcessing) return;
@@ -53,8 +65,9 @@ public class OnlineBoardGameViewModel extends ViewModel {
 
             // 7.1.5 Hệ thống tiến hành kiểm tra quy tắc so khớp.
             isProcessing = true;
+            gameRuleEngine = new GameRuleEngine(currentRoom.getBoardGame());
 
-            if (firstCard.getGroupId() == secondCard.getGroupId()) {
+            if (gameRuleEngine.matchTwoCard(firstCard, secondCard)) {
                 // 7.1.6 Hai thẻ trùng khớp: Cập nhật isMatched = true và cộng điểm.
                 updateCardStateInRoom(currentRoom, firstCard.getId(), true, true);
                 updateCardStateInRoom(currentRoom, secondCard.getId(), true, true);
@@ -128,9 +141,95 @@ public class OnlineBoardGameViewModel extends ViewModel {
         secondCard = null;
     }
 
+    /* * 8.1.1: Hệ thống (OnlineBoardGameViewModel) tự động kích hoạt hàm checkGameEndCondition()
+     * để bắt đầu quy trình kiểm tra điều kiện kết thúc ván.
+     */
     public void checkEndGameOnline(RoomOnline currentRoom) {
+        if (currentRoom == null) return;
+        gameRuleEngine = new GameRuleEngine(currentRoom.getBoardGame());
+
+        if (gameRuleEngine.checkOnlineEndGame(currentRoom)) {
+            // 8.1.5: ViewModel tự kích hoạt hàm nội bộ triggerEndGame(winnerId) để mở tiến trình đóng ván game.
+            processEndGameResult(currentRoom);
+        }
     }
 
     public void processEndGameResult(RoomOnline currentRoom) {
+        if (currentRoom == null) return;
+
+        /* * 8.1.3: ViewModel tiếp tục yêu cầu GameRuleEngine xử lý hàm calculateWinner(host, guest).
+         */
+        GameRuleEngine engine = new GameRuleEngine(currentRoom.getBoardGame());
+        String winnerId = engine.calculateOnlineWinner(currentRoom);
+
+        /* * 8.1.6: ViewModel gọi xuống GameRepository, truyền lệnh qua RemoteDataSource để
+         * thực thi hàm updateRoomStatusAndWinner(roomId, "FINISHED", winnerId).
+         * 8.1.7: RemoteDataSource thực hiện truy vấn ghi đè dữ liệu lên Firebase Firestore...
+         */
+        gameRepository.endRoomOnline(currentRoom.getRoomId(), "FINISHED", winnerId, new RoomOnlineListener() {
+            @Override
+            public void onSuccess(String message) {
+                /* * 8.1.8: Sau khi database cập nhật thành công, ViewModel gọi hàm removeRoomListener()
+                 * để ngắt bộ lắng nghe thời gian thực (Snapshot Listener) nhằm giải phóng tài nguyên.
+                 */
+                gameRepository.stopListeningToRoom();
+
+                // FIX LỖI 2: Dùng biến _gameOverEvent để gọi postValue
+                _gameOverEvent.postValue(winnerId);
+            }
+
+            @Override
+            public void onFailure() {
+                /*
+                 * 8.3.1 -> 8.3.4: (Luồng Exceptions) Bắt được ngoại lệ lỗi kết nối mạng.
+                 * Ghi gói thông tin vào bộ nhớ đệm (Local Cache của Firebase) và báo lỗi ra UI.
+                 */
+                _networkError.postValue(true);
+            }
+        });
+    }
+
+    /*
+     * 8.2.3: Hệ thống thực hiện gửi lệnh cập nhật trạng thái của người chơi thoát trận thành "Bỏ cuộc"
+     */
+    public void abandonGame(String currentUserId, RoomOnline currentRoom) {
+        if (currentRoom == null || currentRoom.getPlayers() == null || currentRoom.getPlayers().isEmpty()) {
+            return;
+        }
+
+        String opponentId = currentUserId;
+
+        /*
+         * 8.2.4: ViewModel lập tức hủy bỏ các tiến trình kiểm tra thông thường, tự động lấy
+         * mã uuid của người chơi còn lại duy nhất ở trong phòng để gán vào làm winnerId.
+         */
+        for (PlayerOnline player : currentRoom.getPlayers()) {
+            if (player != null && player.getUuid() != null && !player.getUuid().equals(currentUserId)) {
+                opponentId = player.getUuid();
+                break;
+            }
+        }
+
+        final String finalOpponentId = opponentId;
+
+        /*
+         * 8.2.5: ViewModel yêu cầu GameRepository gửi lệnh cập nhật kết quả xuống RemoteDataSource.
+         * 8.2.6: RemoteDataSource thực hiện hàm để ghi nhận trạng thái phòng thành "ABANDONED"...
+         */
+        gameRepository.endRoomOnline(currentRoom.getRoomId(), "ABANDONED", finalOpponentId, new RoomOnlineListener() {
+            @Override
+            public void onSuccess(String message) {
+                gameRepository.stopListeningToRoom(); // Hủy lắng nghe dữ liệu ngầm để tránh rò rỉ bộ nhớ
+
+                // FIX LỖI 2 & 3: Dùng _gameOverEvent và biến finalOpponentId
+                _gameOverEvent.postValue(finalOpponentId);
+            }
+
+            @Override
+            public void onFailure() {
+                // Luồng lỗi mạng 8.3
+                _networkError.postValue(true);
+            }
+        });
     }
 }

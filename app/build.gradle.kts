@@ -3,11 +3,29 @@ plugins {
     id("com.google.gms.google-services")
 }
 
+// CHIẾN LƯỢC DỨT ĐIỂM LỖI ANDROID 15/16: 
+// Ép toàn bộ project sử dụng bản vá lỗi IInputManager của Google.
+// Đặt khối này ở ngoài cùng để có quyền ưu tiên cao nhất.
+configurations.all {
+    resolutionStrategy.eachDependency {
+        if (requested.group == "androidx.test.espresso") {
+            useVersion("3.6.1")
+        }
+        if (requested.group == "androidx.test" || requested.group == "androidx.test.services") {
+            if (requested.name == "monitor") useVersion("1.7.2")
+            else if (requested.name == "runner") useVersion("1.6.2")
+            else if (requested.name == "rules") useVersion("1.6.1")
+            else if (requested.name == "core") useVersion("1.6.1")
+        }
+        if (requested.group == "androidx.test.ext" && requested.name == "junit") {
+            useVersion("1.2.1")
+        }
+    }
+}
+
 android {
     namespace = "com.infix.gamelatthe"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     testOptions {
         unitTests {
@@ -44,33 +62,43 @@ android {
 }
 
 dependencies {
-    implementation(libs.lifecycle.viewmodel)
-    implementation(libs.fragment.testing)
-    androidTestImplementation(libs.core.testing)
-
-    implementation(libs.glide)
-    implementation(libs.room.runtime)
-    implementation(libs.fragment)
-    implementation(libs.cardview)
-    implementation(libs.recyclerview)
-    implementation(libs.navigation.fragment)
-    testImplementation(libs.room.testing)
-    annotationProcessor(libs.room.compiler)
-
-    implementation(platform(libs.firebase.bom))
-    implementation(libs.firebase.firestore)
-
+    // UI & Core
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
+    implementation(libs.fragment)
+    implementation(libs.cardview)
+    implementation(libs.recyclerview)
+    
+    // Lifecycle & Navigation
+    implementation(libs.lifecycle.viewmodel)
+    implementation(libs.navigation.fragment)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore)
+
+    // Glide & Room
+    implementation(libs.glide)
+    implementation(libs.room.runtime)
+    annotationProcessor(libs.room.compiler)
+
+    // UNIT TESTING
     testImplementation(libs.junit)
     testImplementation(libs.mockito.core)
     testImplementation(libs.core.testing)
-    androidTestImplementation(libs.ext.junit)
-    androidTestImplementation(libs.espresso.core)
-    implementation("androidx.fragment:fragment:1.6.2")
-    implementation("androidx.lifecycle:lifecycle-viewmodel:2.6.2")
-    implementation("androidx.navigation:navigation-fragment:2.7.7")
-    implementation("androidx.navigation:navigation-ui:2.7.7")
+    testImplementation(libs.room.testing)
+
+    // INSTRUMENTED TESTING (Ép dùng bản chuẩn cho Android 15/16)
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test:rules:1.6.1")
+    androidTestImplementation("androidx.test:monitor:1.7.2")
+    androidTestImplementation("androidx.test:core:1.6.1")
+    androidTestImplementation(libs.core.testing)
+    
+    // Quan trọng: debugImplementation giúp FragmentScenario hoạt động đúng
+    debugImplementation(libs.fragment.testing)
 }

@@ -31,4 +31,56 @@ public class GamePlayOnlineDataSource {
                     roomOnlineListener.onFailure();
                 });
     }
+
+     // UC-9
+    public void updateMatchHistory(
+            RoomOnline roomOnline,
+            RoomOnlineListener listener
+    ) {
+
+        if (roomOnline == null
+                || roomOnline.getRoomId() == null) {
+
+            listener.onFailure();
+            return;
+        }
+
+        Map<String, Object> updates =
+                new HashMap<>();
+
+        // 9.1.4 Cập nhật người thắng
+        updates.put(
+                "winnerId",
+                roomOnline.getWinnerId()
+        );
+
+        // 9.1.5 Cập nhật trạng thái phòng
+        updates.put(
+                "status",
+                roomOnline.getStatus()
+        );
+
+        // 9.1.6 Cập nhật thời gian kết thúc
+        updates.put(
+                "boardGame.timeEnd",
+                roomOnline.getBoardGame()
+                        .getTimeEnd()
+        );
+
+        db.collection("rooms")
+                .document(
+                        roomOnline.getRoomId()
+                )
+                .update(updates)
+                .addOnSuccessListener(
+                        unused ->
+                                listener.onSuccess(
+                                        "Success"
+                                )
+                )
+                .addOnFailureListener(
+                        e -> listener.onFailure()
+                );
+    }
+
 }

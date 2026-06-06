@@ -2,6 +2,7 @@ package com.infix.gamelatthe.ui;
 
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
+import com.infix.gamelatthe.data.model.multi.CardOnline;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import java.util.Collections;
@@ -51,17 +52,30 @@ public class GameRuleEngine {
     public BoardGame getBoardGame() {
         return boardGame;
     }
-  // 8.1.2 Kiểm tra trạng thái lật hết bài của phòng chơi trực tuyến.
-    public boolean checkOnlineEndGame(RoomOnline roomOnline) {
-        if (roomOnline == null || roomOnline.getBoardGame() == null) {
+    /* * 8.1.2: ViewModel gọi sang lớp GameRuleEngine thực hiện hàm checkAllCardMatched().
+     * GameRuleEngine thực hiện quét danh sách CardOnline và xác nhận tất cả các thẻ bài
+     * đã được ghép trúng (isMatched == true), trả về kết quả true.
+     */    public boolean checkOnlineEndGame(RoomOnline roomOnline) {
+        if (roomOnline == null || roomOnline.getBoardGame() == null || roomOnline.getBoardGame().getCards() == null) {
             return false;
         }
-        return roomOnline.getBoardGame().checkAllCardFlipped();
+        List<Card> cards = roomOnline.getBoardGame().getCards();
+        for (Card c : cards) {
+            if (c instanceof CardOnline) {
+                if (!((CardOnline) c).isMatched()) {
+                    return false;
+                }
+            } else {
+                if (!c.isFlipped()) return false;
+            }
+        }
+        return true;
     }
-   // 8.1.3 & 8.1.4 Quét danh sách PlayerOnline, so sánh score và trả về mã uuid của người chiến thắng.
-    public String calculateOnlineWinner(RoomOnline roomOnline) {
+    /* * 8.1.4: GameRuleEngine thực hiện so sánh thuộc tính score (điểm số) hiện tại của
+     * hai đối tượng PlayerOnline (Host và Guest), tìm ra người cao điểm hơn và trả về mã winnerId tương ứng.
+     */    public String calculateOnlineWinner(RoomOnline roomOnline) {
         if (roomOnline == null || roomOnline.getPlayers() == null || roomOnline.getPlayers().isEmpty()) {
-            return "";
+            return "DRAW";
         }
 
         List<PlayerOnline> players = roomOnline.getPlayers();
@@ -69,13 +83,13 @@ public class GameRuleEngine {
             return players.get(0).getUuid();
         }
 
-        PlayerOnline player1 = players.get(0);
-        PlayerOnline player2 = players.get(1);
+        PlayerOnline p1 = players.get(0);
+        PlayerOnline p2 = players.get(1);
 
-        if (player1.getScore() > player2.getScore()) {
-            return player1.getUuid();
-        } else if (player2.getScore() > player1.getScore()) {
-            return player2.getUuid();
+        if (p1.getScore() > p2.getScore()) {
+            return p1.getUuid();
+        } else if (p2.getScore() > p1.getScore()) {
+            return p2.getUuid();
         } else {
             return "DRAW";
         }
