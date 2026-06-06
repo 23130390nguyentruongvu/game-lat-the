@@ -25,6 +25,7 @@ import com.infix.gamelatthe.ui.view.board_game_screen.BoardGameAdapter;
 import com.infix.gamelatthe.ui.viewmodel.LobbyRoomViewModel;
 import com.infix.gamelatthe.ui.viewmodel.OnlineBoardGameViewModel;
 
+
 public class OnlineBoardGameFragment extends Fragment {
     private FragmentOnlineBoardGameBinding binding;
     private static final String ARG_ROOM_ONLINE = "ARG_ROOM_ONLINE";
@@ -83,19 +84,6 @@ public class OnlineBoardGameFragment extends Fragment {
 
     private void setupRecyclerView() {
         boardGameAdapter = new BoardGameAdapter(card -> {
-            if (roomOnline == null) return;
-
-            // [7.1.0] Người chơi chạm vào một thẻ đang úp trên giao diện bàn cờ.
-            if (roomOnline.getCurrentTurn() != null && !roomOnline.getCurrentTurn().equals(currentUserId)) {
-                // [7.3.3] Hiển thị Toast cảnh báo "Chưa tới lượt của bạn!".
-                Toast.makeText(requireContext(), "Chưa tới lượt của bạn!", Toast.LENGTH_SHORT).show();
-
-                // [7.3.2] Chặn thao tác, từ chối gửi Request (BẮT BUỘC PHẢI CÓ RETURN Ở ĐÂY)
-                return;
-            }
-
-            // Xử lý chốt chặn ép kiểu từ Firebase
-            if (card instanceof CardOnline) {
             // Nếu game đã kết thúc, khóa tương tác không cho lật bài nữa (Bước 8.1.9)
             if (isGameOver) return;
             if (card instanceof CardOnline && roomOnline != null) {
@@ -107,14 +95,6 @@ public class OnlineBoardGameFragment extends Fragment {
                 }
                 // 8.1.0: Người chơi thực hiện click và lật thành công cặp bài
                 onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);
-            } else {
-                Log.e("TestUC7", "Lỗi dữ liệu: Thẻ truyền vào không phải CardOnline. Lớp hiện tại: " + card.getClass().getSimpleName());
-                // Vẫn cố gắng ép kiểu để nếu có lỗi thì văng log rõ ràng, dễ bắt bệnh Firebase
-                try {
-                    onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);
-                } catch (ClassCastException e) {
-                    Log.e("TestUC7", "Không thể ép kiểu! Kiểm tra lại UC-6 lúc tải BoardGame từ Firestore.");
-                }
             }
         });
 
@@ -132,7 +112,7 @@ public class OnlineBoardGameFragment extends Fragment {
             if (room != null && room.getBoardGame() != null) {
                 this.roomOnline = room;
 
-                // [7.1.3] Trình lắng nghe nhận sự kiện, đồng bộ hoạt họa lật ngửa thẻ.
+                // 7.1.3 Trình lắng nghe nhận sự kiện, đồng bộ hoạt họa lật ngửa thẻ.
                 boardGameAdapter.updateCards(room.getBoardGame().getCards());
                 if (!isGameOver && room.getStatus() != null &&
                         (room.getStatus().equals("FINISHED") || room.getStatus().equals("ABANDONED"))) {
@@ -145,8 +125,6 @@ public class OnlineBoardGameFragment extends Fragment {
                 }
             }
         });
-
-        // [8.1.9] Hiện Dialog Kết Quả
         // 8.1.9 & 8.2.7: Giao diện nhận tín hiệu đồng bộ thay đổi trạng thái, thực hiện khóa bàn và hiện Dialog
         onlineBoardGameViewModel.gameOverEvent.observe(getViewLifecycleOwner(), winnerId -> {
             // Thêm check !isGameOver để tránh việc Dialog bị hiện 2 lần trùng nhau
