@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
             editor.putString(KEY_UUID_USER, UUID.randomUUID().toString());
             editor.apply();
         }
-      // initDataForFirestore();
+       initDataForFirestore();
     }
 
     /**
