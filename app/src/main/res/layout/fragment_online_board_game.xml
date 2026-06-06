@@ -8,8 +8,8 @@
 
     <ImageView
         android:id="@+id/ivBack"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
+        android:layout_width="95dp"
+        android:layout_height="97dp"
         android:layout_gravity="top|end"
         android:layout_margin="16dp"
         android:background="?attr/selectableItemBackgroundBorderless"
