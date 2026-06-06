@@ -129,6 +129,7 @@ public class LobbyRoomFragment extends Fragment {
             lobbyRoomViewModel.startListeningToRoomByCode(roomCode, new RoomSnapshotCallback() {
                 @Override
                 public void onDataChanged(RoomOnline room) {
+                    Log.d("SVU", room.toString());
                     lobbyRoomViewModel.setRoomOnlineState(room);
                 }
 
