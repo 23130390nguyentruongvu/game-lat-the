@@ -1,10 +1,12 @@
-package com.infix.gamelatthe;
+package com.infix.gamelatthe; // Bác nhớ check lại dòng package trên cùng máy bác nhé
 
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
+import com.infix.gamelatthe.data.model.multi.CardOnline;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.ui.GameRuleEngine;
@@ -14,83 +16,110 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+
 public class GameRuleEngineTestUC8 {
-    private GameRuleEngine gameRuleEngine;
-    private BoardGame mockBoardGame;
-    private RoomOnline mockRoomOnline;
+
+    private RoomOnline room;
 
     @Before
     public void setUp() {
-        mockBoardGame = new BoardGame();
-        gameRuleEngine = new GameRuleEngine(mockBoardGame);
-        mockRoomOnline = new RoomOnline();
+        // Chỉ khởi tạo phòng ảo trước mỗi hàm test
+        room = new RoomOnline();
     }
 
     // ==========================================
-    // KIỂM THỬ HÀM: checkOnlineEndGame()
+    // TEST HÀM: checkOnlineEndGame (Kiểm tra hết bài chưa)
     // ==========================================
 
     @Test
-    public void testCheckOnlineEndGame_KhiTatCaCardDaLat_TraVeTrue() {
-        // [Kịch bản thông thường] Giả lập tất cả thẻ bài trong phòng đều đã lật (isFlipped = true)
+    public void testCheckOnlineEndGame_KhiTatCaTheDaGhepTrung_ThiTraVeTrue() {
+        // 1. Giả lập danh sách thẻ: Tất cả đều đã isMatched = true
         List<Card> cards = new ArrayList<>();
-        cards.add(new Card(1, 101, "url1", true));
-        cards.add(new Card(2, 101, "url1", true));
+        CardOnline card1 = new CardOnline();
+        card1.setMatched(true);
+        CardOnline card2 = new CardOnline();
+        card2.setMatched(true);
 
-        mockBoardGame.setCards(cards);
-        mockRoomOnline.setBoardGame(mockBoardGame);
+        cards.add(card1);
+        cards.add(card2);
 
-        boolean result = gameRuleEngine.checkOnlineEndGame(mockRoomOnline);
+        BoardGame boardGame = new BoardGame();
+        boardGame.setCards(cards);
+        room.setBoardGame(boardGame);
 
-        // Khẳng định kết quả phải là TRUE (Trận đấu kết thúc)
-        assertTrue(result);
+        // FIX LỖI ĐỎ: Truyền boardGame vào trong ngoặc
+        GameRuleEngine gameRuleEngine = new GameRuleEngine(boardGame);
+
+        // 2. Gọi hàm và Khẳng định (Assert) kết quả phải là True
+        assertTrue(gameRuleEngine.checkOnlineEndGame(room));
     }
 
     @Test
-    public void testCheckOnlineEndGame_KhiConCardChuaLat_TraVeFalse() {
-        // [Kịch bản biên/lỗi] Giả lập vẫn còn thẻ chưa lật (một thẻ true, một thẻ false)
+    public void testCheckOnlineEndGame_KhiCoTheChuaGhepTrung_ThiTraVeFalse() {
+        // 1. Giả lập danh sách thẻ: Có 1 thẻ chưa lật trúng (isMatched = false)
         List<Card> cards = new ArrayList<>();
-        cards.add(new Card(1, 101, "url1", true));
-        cards.add(new Card(2, 101, "url1", false)); // Thẻ này chưa lật
+        CardOnline card1 = new CardOnline();
+        card1.setMatched(true);
+        CardOnline card2 = new CardOnline();
+        card2.setMatched(false); // Thẻ này chưa ăn điểm
 
-        mockBoardGame.setCards(cards);
-        mockRoomOnline.setBoardGame(mockBoardGame);
+        cards.add(card1);
+        cards.add(card2);
 
-        boolean result = gameRuleEngine.checkOnlineEndGame(mockRoomOnline);
+        BoardGame boardGame = new BoardGame();
+        boardGame.setCards(cards);
+        room.setBoardGame(boardGame);
 
-        // Khẳng định kết quả phải là FALSE (Trận đấu tiếp tục)
-        assertFalse(result);
+        // FIX LỖI ĐỎ: Truyền boardGame vào trong ngoặc
+        GameRuleEngine gameRuleEngine = new GameRuleEngine(boardGame);
+
+        // 2. Gọi hàm và Khẳng định kết quả phải là False (Game chưa kết thúc)
+        assertFalse(gameRuleEngine.checkOnlineEndGame(room));
     }
 
     // ==========================================
-    // KIỂM THỬ HÀM: calculateOnlineWinner()
+    // TEST HÀM: calculateOnlineWinner (Phân định thắng thua)
     // ==========================================
 
     @Test
-    public void testCalculateOnlineWinner_NguoiChoi1DiemCaoHon_P1Thang() {
-        // Giả lập Người chơi 1 (UUID: user_01) có 5 điểm, Người chơi 2 (UUID: user_02) có 3 điểm
+    public void testCalculateOnlineWinner_KhiHostDiemCaoHon_ThiTraVeHostId() {
+        // 1. Giả lập danh sách người chơi (Host 5 điểm, Guest 3 điểm)
         List<PlayerOnline> players = new ArrayList<>();
-        players.add(new PlayerOnline("user_01", "Player 1", 5, true, "HOST"));
-        players.add(new PlayerOnline("user_02", "Player 2", 3, true, "GUEST"));
-        mockRoomOnline.setPlayers(players);
+        players.add(new PlayerOnline("host_123", "Host", 5, true, "HOST"));
+        players.add(new PlayerOnline("guest_456", "Guest", 3, true, "GUEST"));
+        room.setPlayers(players);
 
-        String winnerId = gameRuleEngine.calculateOnlineWinner(mockRoomOnline);
+        BoardGame boardGame = new BoardGame();
+        room.setBoardGame(boardGame);
 
-        // Người chơi 1 phải là người thắng cuộc
-        assertEquals("user_01", winnerId);
+        // FIX LỖI ĐỎ: Truyền boardGame vào trong ngoặc
+        GameRuleEngine gameRuleEngine = new GameRuleEngine(boardGame);
+
+        // 2. Gọi hàm tính toán Winner
+        String winnerId = gameRuleEngine.calculateOnlineWinner(room);
+
+        // 3. Khẳng định Winner phải là Host
+        assertEquals("host_123", winnerId);
     }
 
     @Test
-    public void testCalculateOnlineWinner_HaiNguoiBangDiem_TraVeDraw() {
-        // Giả lập kịch bản 2 bên hòa nhau (cùng được 4 điểm)
+    public void testCalculateOnlineWinner_KhiHaiNguoiBangDiem_ThiTraVeDRAW() {
+        // 1. Giả lập danh sách người chơi (Host 4 điểm, Guest 4 điểm)
         List<PlayerOnline> players = new ArrayList<>();
-        players.add(new PlayerOnline("user_01", "Player 1", 4, true, "HOST"));
-        players.add(new PlayerOnline("user_02", "Player 2", 4, true, "GUEST"));
-        mockRoomOnline.setPlayers(players);
+        players.add(new PlayerOnline("host_123", "Host", 4, true, "HOST"));
+        players.add(new PlayerOnline("guest_456", "Guest", 4, true, "GUEST"));
+        room.setPlayers(players);
 
-        String winnerId = gameRuleEngine.calculateOnlineWinner(mockRoomOnline);
+        BoardGame boardGame = new BoardGame();
+        room.setBoardGame(boardGame);
 
-        // Hệ thống phải trả về mã "DRAW" công nhận kết quả Hòa
+        // FIX LỖI ĐỎ: Truyền boardGame vào trong ngoặc
+        GameRuleEngine gameRuleEngine = new GameRuleEngine(boardGame);
+
+        // 2. Gọi hàm tính toán Winner
+        String winnerId = gameRuleEngine.calculateOnlineWinner(room);
+
+        // 3. Khẳng định phải trả về chữ "DRAW" (Hòa)
         assertEquals("DRAW", winnerId);
     }
 }

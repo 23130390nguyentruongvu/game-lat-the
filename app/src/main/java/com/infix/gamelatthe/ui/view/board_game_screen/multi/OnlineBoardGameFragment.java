@@ -35,6 +35,8 @@ public class OnlineBoardGameFragment extends Fragment {
     private BoardGameAdapter boardGameAdapter;
     private String currentUserId;
 
+    // Thêm cờ để khóa bàn cờ theo bước 8.1.9
+    private boolean isGameOver = false;
     public static OnlineBoardGameFragment newInstance(RoomOnline roomOnline) {
         OnlineBoardGameFragment fragment = new OnlineBoardGameFragment();
         Bundle args = new Bundle();
@@ -73,17 +75,21 @@ public class OnlineBoardGameFragment extends Fragment {
 
         setupRecyclerView();
         observeRoomData();
+        // 8.2.1: Trong khi trận đấu đang diễn ra, người chơi nhấn chọn nút "Thoát trận" trên giao diện
+        binding.ivBack.setOnClickListener(v -> showConfirmAbandonDialog());
     }
 
     private void setupRecyclerView() {
         boardGameAdapter = new BoardGameAdapter(card -> {
+            // Nếu game đã kết thúc, khóa tương tác không cho lật bài nữa (Bước 8.1.9)
+            if (isGameOver) return;
             if (card instanceof CardOnline && roomOnline != null) {
                 if (roomOnline.getCurrentTurn() != null && !roomOnline.getCurrentTurn().equals(currentUserId)) {
                     // 7.3.3 Hiển thị Toast cảnh báo "Chưa tới lượt của bạn!".
                     Toast.makeText(requireContext(), "Chưa tới lượt của bạn!", Toast.LENGTH_SHORT).show();
                 }
-                onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);
-            }
+            // 8.1.0: Người chơi thực hiện click và lật thành công cặp bài
+                onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);            }
         });
 
         binding.rvBoardGame.setLayoutManager(new GridLayoutManager(requireContext(), 4));
@@ -103,12 +109,15 @@ public class OnlineBoardGameFragment extends Fragment {
                 boardGameAdapter.updateCards(room.getBoardGame().getCards());
             }
         });
-        // [8.1.9] Hiện Dialog Kết Quả
+        // 8.1.9 & 8.2.7: Giao diện nhận tín hiệu đồng bộ thay đổi trạng thái, thực hiện khóa bàn và hiện Dialog
         onlineBoardGameViewModel.gameOverEvent.observe(getViewLifecycleOwner(), winnerId -> {
-            if (winnerId != null) showGameOverDialog(winnerId);
+            if (winnerId != null) {
+                isGameOver = true; // Thực thi lệnh lockBoardInteraction() (Khóa tương tác bàn cờ)
+                showGameOverDialog(winnerId); // Hiện hộp thoại kết quả
+            }
         });
 
-        // [8.3.4] Hiện thông báo mất mạng
+        // 8.3.4: Lỗi kết nối đồng bộ kết quả. Hệ thống hiển thị thông báo
         onlineBoardGameViewModel.networkError.observe(getViewLifecycleOwner(), isError -> {
             if (isError != null && isError) showNetworkErrorDialog();
         });
@@ -119,11 +128,13 @@ public class OnlineBoardGameFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
+
     private void showConfirmAbandonDialog() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Xác nhận rời trận")
-                .setMessage("Bạn có chắc chắn muốn bỏ cuộc? Bạn sẽ bị tính là THUA cuộc lập tức.")
-                .setPositiveButton("Rời phòng", (dialog, which) -> {
+                .setMessage("Bạn có chắc chắn muốn bỏ cuộc? Đối thủ sẽ lập tức giành chiến thắng.")
+                .setPositiveButton("Bỏ cuộc", (dialog, which) -> {
+                    // 8.2.2: Giao diện cục bộ bắt được sự kiện và kích hoạt khẩn cấp hàm abandonGame
                     onlineBoardGameViewModel.abandonGame(currentUserId, roomOnline);
                 })
                 .setNegativeButton("Ở lại", (dialog, which) -> dialog.dismiss())
@@ -152,7 +163,7 @@ public class OnlineBoardGameFragment extends Fragment {
     private void showNetworkErrorDialog() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Lỗi kết nối mạng")
-                .setMessage("Không thể đồng bộ kết quả. Vui lòng kiểm tra Internet!")
+                .setMessage("Lỗi kết nối đồng bộ kết quả. Hệ thống đã lưu trữ tạm thời và sẽ tự động cập nhật lại khi mạng ổn định.")
                 .setPositiveButton("Đã hiểu", (dialog, which) -> dialog.dismiss())
                 .show();
     }
