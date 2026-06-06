@@ -134,15 +134,25 @@ public class OnlineBoardGameFragment extends Fragment {
 
                 // [7.1.3] Trình lắng nghe nhận sự kiện, đồng bộ hoạt họa lật ngửa thẻ.
                 boardGameAdapter.updateCards(room.getBoardGame().getCards());
+                if (!isGameOver && room.getStatus() != null &&
+                        (room.getStatus().equals("FINISHED") || room.getStatus().equals("ABANDONED"))) {
+
+                    String winnerId = room.getWinnerId();
+                    if (winnerId != null && !winnerId.isEmpty()) {
+                        isGameOver = true; // Đóng băng bàn cờ ngay lập tức
+                        showGameOverDialog(winnerId); // Hiện Dialog kết quả cho máy người thua
+                    }
+                }
             }
         });
 
         // [8.1.9] Hiện Dialog Kết Quả
         // 8.1.9 & 8.2.7: Giao diện nhận tín hiệu đồng bộ thay đổi trạng thái, thực hiện khóa bàn và hiện Dialog
         onlineBoardGameViewModel.gameOverEvent.observe(getViewLifecycleOwner(), winnerId -> {
-            if (winnerId != null) {
-                isGameOver = true; // Thực thi lệnh lockBoardInteraction() (Khóa tương tác bàn cờ)
-                showGameOverDialog(winnerId); // Hiện hộp thoại kết quả
+            // Thêm check !isGameOver để tránh việc Dialog bị hiện 2 lần trùng nhau
+            if (winnerId != null && !isGameOver) {
+                isGameOver = true;
+                showGameOverDialog(winnerId);
             }
         });
 
@@ -150,8 +160,6 @@ public class OnlineBoardGameFragment extends Fragment {
         onlineBoardGameViewModel.networkError.observe(getViewLifecycleOwner(), isError -> {
             if (isError != null && isError) showNetworkErrorDialog();
         });
-
-
     }
 
 
