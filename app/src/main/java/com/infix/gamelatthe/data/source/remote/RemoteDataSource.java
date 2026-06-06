@@ -234,6 +234,12 @@ public class RemoteDataSource {
                             } catch (Exception e) {
                                 Log.e("RemoteDataSource", "Lỗi cấu trúc lại CardOnline: " + e.getMessage());
                             }
+                        DocumentSnapshot document = snapshot.getDocuments().get(0);
+
+                        RoomOnline room = parseRoomOnlineManual(document);
+
+                        if (room != null) {
+                            callback.onDataChanged(room);
                         }
 
                         callback.onDataChanged(room);
@@ -328,8 +334,9 @@ public class RemoteDataSource {
                     }
 
                     DocumentSnapshot roomDocSnap = roomTask.getResult().getDocuments().get(0);
-                    String roomId = roomDocSnap.getId();
-                    RoomOnline roomOnline = roomDocSnap.toObject(RoomOnline.class);
+//                    String roomId = roomDocSnap.getId();
+                    RoomOnline roomOnline = parseRoomOnlineManual(roomDocSnap);
+//                    RoomOnline roomOnline = roomDocSnap.toObject(RoomOnline.class);
 
                     if (roomOnline == null || roomOnline.getPlayers() == null || roomOnline.getPlayers().isEmpty()) {
                         roomOnlineListener.onFailure();
@@ -385,7 +392,7 @@ public class RemoteDataSource {
                                 updates.put("currentTurn", firstTurnPlayerId);
                                 updates.put("status", StatusRoomOnlineEnum.PLAYING.name());
 
-                                db.collection("rooms").document(roomId)
+                                db.collection("rooms").document(roomDocSnap.getId())
                                         .update(updates)
                                         .addOnSuccessListener(aVoid -> {
                                             roomOnlineListener.onSuccess("Trận đấu bắt đầu!");
@@ -429,5 +436,86 @@ public class RemoteDataSource {
                     callback.onRoomsLoaded(matchedRooms); // Đổi onSuccess thành onRoomsLoaded
                 })
                 .addOnFailureListener(e -> callback.onError(e.getMessage())); // Đổi onFailure thành onError
+    }
+}
+
+    private RoomOnline parseRoomOnlineManual(DocumentSnapshot document) {
+        try {
+            RoomOnline room = new RoomOnline();
+
+            room.setRoomId(document.getId());
+            room.setRoomCode(document.getString("roomCode"));
+            room.setStatus(document.getString("status"));
+            room.setDifficulty(document.getString("difficulty"));
+            room.setCurrentTurn(document.getString("currentTurn"));
+            room.setWinnerId(document.getString("winnerId"));
+            room.setCreateAt(document.getDate("createAt"));
+
+            List<Map<String, Object>> playersMapList = (List<Map<String, Object>>) document.get("players");
+            List<PlayerOnline> playersList = new ArrayList<>();
+
+            if (playersMapList != null) {
+                for (Map<String, Object> playerMap : playersMapList) {
+                    PlayerOnline player = new PlayerOnline();
+                    player.setUuid((String) playerMap.get("uuid"));
+                    player.setName((String) playerMap.get("name"));
+                    player.setRole((String) playerMap.get("role"));
+
+                    if (playerMap.get("score") != null) {
+                        player.setScore(((Number) playerMap.get("score")).intValue());
+                    }
+                    player.setReady(Boolean.TRUE.equals(playerMap.get("ready")));
+
+                    playersList.add(player);
+                }
+            }
+            room.setPlayers(playersList);
+
+            Map<String, Object> boardGameMap = (Map<String, Object>) document.get("boardGame");
+            if (boardGameMap != null) {
+                BoardGame boardGame = new BoardGame();
+
+                if (boardGameMap.containsKey("timeInit") && boardGameMap.get("timeInit") != null) {
+                    boardGame.setTimeInit(((Number) boardGameMap.get("timeInit")).longValue());
+                } else {
+                    boardGame.setTimeInit(0L);
+                }
+                if (boardGameMap.containsKey("timeEnd") && boardGameMap.get("timeEnd") != null) {
+                    boardGame.setTimeEnd(((Number) boardGameMap.get("timeEnd")).longValue());
+                } else {
+                    boardGame.setTimeEnd(0L);
+                }
+
+                List<Map<String, Object>> cardsMapList = (List<Map<String, Object>>) boardGameMap.get("cards");
+                List<com.infix.gamelatthe.data.model.Card> cardOnlineList = new ArrayList<>();
+
+                if (cardsMapList != null) {
+                    for (Map<String, Object> cardMap : cardsMapList) {
+                        CardOnline cardOnline = new CardOnline();
+
+                        if (cardMap.get("id") != null) {
+                            cardOnline.setId(Integer.parseInt(cardMap.get("id").toString()));
+                        }
+                        if (cardMap.get("groupId") != null) {
+                            cardOnline.setGroupId(((Number) cardMap.get("groupId")).intValue());
+                        }
+                        cardOnline.setUrlImage((String) cardMap.get("urlImage"));
+
+                        cardOnline.setFlipped(Boolean.TRUE.equals(cardMap.get("flipped")));
+                        cardOnline.setEnable(Boolean.TRUE.equals(cardMap.get("enable")));
+                        cardOnline.setMatched(Boolean.TRUE.equals(cardMap.get("matched")));
+
+                        cardOnlineList.add(cardOnline);
+                    }
+                }
+                boardGame.setCards(cardOnlineList);
+                room.setBoardGame(boardGame);
+            }
+
+            return room;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

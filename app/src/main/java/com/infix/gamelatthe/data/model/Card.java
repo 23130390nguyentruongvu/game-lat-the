@@ -19,6 +19,17 @@ public class Card {
         isEnable = true;
     }
 
+    @Override
+    public String toString() {
+        return "Card{" +
+                "id=" + id +
+                ", groupId=" + groupId +
+                ", urlImage='" + urlImage + '\'' +
+                ", isFlipped=" + isFlipped +
+                ", isEnable=" + isEnable +
+                '}';
+    }
+
     public int getId() {
         return id;
     }
@@ -33,6 +44,18 @@ public class Card {
 
     public boolean isFlipped() {
         return isFlipped;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setGroupId(int groupId) {
+        this.groupId = groupId;
+    }
+
+    public void setUrlImage(String urlImage) {
+        this.urlImage = urlImage;
     }
 
     public boolean isEnable() {

@@ -25,13 +25,12 @@ import java.util.List;
 
 public class OnlineBoardGameViewModelTestUC8 {
 
+    // Bắt buộc phải có để test các biến LiveData chạy đồng bộ
     @Rule
     public InstantTaskExecutorRule instantTaskExecutorRule = new InstantTaskExecutorRule();
 
     private OnlineBoardGameViewModel viewModel;
     private GameRepository mockGameRepository;
-
-    // Đối tượng cực kỳ quan trọng để đánh chặn Firebase
     private MockedConstruction<GameRepository> mockedConstruction;
 
     @Mock
@@ -44,89 +43,86 @@ public class OnlineBoardGameViewModelTestUC8 {
     public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
 
-        // 1. KÍCH HOẠT ĐÁNH CHẶN: Ép toàn bộ lệnh "new GameRepository()" biến thành đồ giả
-        // Nhờ vậy RemoteDataSource và Firebase sẽ KHÔNG bao giờ được gọi
-        mockedConstruction = mockConstruction(GameRepository.class, (mock, context) -> {
-            // Không làm gì cả
-        });
+        // 1. CHẶN FIREBASE: Không cho Firebase khởi tạo để tránh Crash (Mock Repository)
+        mockedConstruction = mockConstruction(GameRepository.class, (mock, context) -> {});
 
-        // 2. Khởi tạo ViewModel an toàn (sẽ không bị Crash báo đỏ nữa)
+        // 2. Khởi tạo ViewModel (Nó sẽ tự động lấy cái Repository ảo vừa tạo ở trên)
         viewModel = new OnlineBoardGameViewModel();
-
-        // 3. Lấy đối tượng giả lập (Mock) đã sinh ra để dùng cho các hàm Test bên dưới
         mockGameRepository = mockedConstruction.constructed().get(0);
 
-        // 4. Gắn các trình lắng nghe LiveData
+        // 3. Gắn trình lắng nghe vào các biến LiveData Public
         viewModel.gameOverEvent.observeForever(gameOverObserver);
         viewModel.networkError.observeForever(networkErrorObserver);
     }
 
     @After
     public void tearDown() {
-        // BẮT BUỘC: Đóng bộ đánh chặn sau khi chạy xong mỗi test
+        // Đóng bộ chặn sau mỗi lần Test
         if (mockedConstruction != null) {
             mockedConstruction.close();
         }
     }
 
     // ==========================================
-    // KIỂM THỬ HÀM: abandonGame() - Bỏ cuộc (Giữ nguyên cấu trúc List)
+    // TEST CASE 1: BỎ CUỘC (LUỒNG ALTERNATE FLOW 8.2)
     // ==========================================
     @Test
     public void testAbandonGame_KhiUserBamBoCuoc_ThiDoiThuSeThang() {
+        // 1. Chuẩn bị Mock Data
         RoomOnline room = new RoomOnline();
-        room.setRoomId("room_xyz");
+        room.setRoomId("room_123");
 
+        // Set List Player để hàm abandonGame không bị return ngang
         List<PlayerOnline> players = new ArrayList<>();
-        players.add(new PlayerOnline("current_user", "Me", 2, true, "HOST"));
-        players.add(new PlayerOnline("opponent_user", "Opponent", 1, true, "GUEST"));
+        players.add(new PlayerOnline("user_me", "Me", 2, true, "HOST"));
+        players.add(new PlayerOnline("user_enemy", "Enemy", 1, true, "GUEST"));
         room.setPlayers(players);
 
-        // Thực thi: User bấm bỏ cuộc
-        viewModel.abandonGame("current_user", room);
+        // 2. Kích hoạt luồng bấm bỏ cuộc
+        viewModel.abandonGame("user_me", room);
 
         ArgumentCaptor<RoomOnlineListener> captor = ArgumentCaptor.forClass(RoomOnlineListener.class);
 
-        // Xác minh gọi hàm endRoomOnline chính xác
+        // 3. Khẳng định ViewModel có gửi dữ liệu đối thủ (user_enemy) lên server không
         verify(mockGameRepository).endRoomOnline(
-                eq("room_xyz"),
+                eq("room_123"),
                 eq("ABANDONED"),
-                eq("opponent_user"),
+                eq("user_enemy"), // Kiểm tra đối thủ được xét thắng
                 captor.capture()
         );
 
-        // Giả lập Firebase trả về onSuccess
-        captor.getValue().onSuccess("Trận đấu kết thúc!");
+        // 4. Giả lập Server Firebase phản hồi thành công
+        captor.getValue().onSuccess("OK");
 
+        // 5. Khẳng định UI nhận được lệnh ngừng lắng nghe và hiển thị đối thủ thắng
         verify(mockGameRepository).stopListeningToRoom();
-        verify(gameOverObserver).onChanged("opponent_user");
+        verify(gameOverObserver).onChanged("user_enemy");
     }
 
     // ==========================================
-    // KIỂM THỬ HÀM: Luồng Ngoại Lệ (Lỗi rớt mạng)
+    // TEST CASE 2: LỖI MẠNG (LUỒNG EXCEPTION 8.3)
     // ==========================================
     @Test
     public void testExecuteEndGame_KhiFirebaseLoiMatMang_ThiHienDialogBaoLoi() {
+        // 1. Chuẩn bị Mock Data
         RoomOnline room = new RoomOnline();
-        room.setRoomId("room_xyz");
+        room.setRoomId("room_123");
 
-        // ---- ĐOẠN BỔ SUNG: Khởi tạo danh sách người chơi để không bị return ngang ----
         List<PlayerOnline> players = new ArrayList<>();
-        players.add(new PlayerOnline("current_user", "Me", 2, true, "HOST"));
-        players.add(new PlayerOnline("opponent_user", "Opponent", 1, true, "GUEST"));
+        players.add(new PlayerOnline("user_me", "Me", 2, true, "HOST"));
+        players.add(new PlayerOnline("user_enemy", "Enemy", 1, true, "GUEST"));
         room.setPlayers(players);
-        // -----------------------------------------------------------------------------
 
-        // Kích hoạt luồng bỏ cuộc
-        viewModel.abandonGame("current_user", room);
+        // 2. Kích hoạt luồng game
+        viewModel.abandonGame("user_me", room);
 
         ArgumentCaptor<RoomOnlineListener> captor = ArgumentCaptor.forClass(RoomOnlineListener.class);
-        verify(mockGameRepository).endRoomOnline(any(), any(), any(), captor.capture());
+        verify(mockGameRepository).endRoomOnline(anyString(), anyString(), anyString(), captor.capture());
 
-        // KỊCH BẢN NGOẠI LỆ: Giả lập Firebase báo thất bại do rớt mạng
+        // 3. KỊCH BẢN NGOẠI LỆ: Giả lập rớt mạng (gọi onFailure)
         captor.getValue().onFailure();
 
-        // Khẳng định LiveData báo lỗi mạng phải kích hoạt
+        // 4. Khẳng định LiveData bắn tín hiệu 'true' để UI hiện thông báo lỗi
         verify(networkErrorObserver).onChanged(true);
     }
 }

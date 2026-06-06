@@ -3,6 +3,7 @@ package com.infix.gamelatthe;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.mockConstruction;
 
 import androidx.arch.core.executor.testing.InstantTaskExecutorRule;
 
@@ -19,6 +20,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
@@ -31,7 +33,7 @@ public class OnlineBoardGameViewModelUC7Test {
 
     @Mock
     private GameRepository mockRepository;
-
+    private MockedConstruction<GameRepository> mockedConstruction;
     private OnlineBoardGameViewModel viewModel;
     private RoomOnline mockRoom;
     private String myUserId = "sinh_123";
@@ -40,10 +42,9 @@ public class OnlineBoardGameViewModelUC7Test {
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
-
-        // Truyền mockRepository vào để chặn gọi Firebase
-        viewModel = new OnlineBoardGameViewModel(mockRepository);
-
+        try (MockedConstruction<GameRepository> mocked = mockConstruction(GameRepository.class)) {
+            viewModel = new OnlineBoardGameViewModel();
+        }
         List<Card> mockCards = new ArrayList<>();
         mockCards.add(new CardOnline(1, 101, "url1", false));
         mockCards.add(new CardOnline(2, 101, "url1", false));

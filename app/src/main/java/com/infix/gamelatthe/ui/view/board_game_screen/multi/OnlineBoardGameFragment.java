@@ -16,6 +16,7 @@ import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 
+import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.data.model.multi.CardOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.databinding.FragmentOnlineBoardGameBinding;
@@ -28,11 +29,15 @@ public class OnlineBoardGameFragment extends Fragment {
     private FragmentOnlineBoardGameBinding binding;
     private static final String ARG_ROOM_ONLINE = "ARG_ROOM_ONLINE";
 
-    private RoomOnline roomOnline;
     private LobbyRoomViewModel lobbyRoomViewModel;
     private OnlineBoardGameViewModel onlineBoardGameViewModel;
     private BoardGameAdapter boardGameAdapter;
     private String currentUserId;
+
+    private RoomOnline roomOnline;
+
+    // Thêm cờ để khóa bàn cờ theo bước 8.1.9
+    private boolean isGameOver = false;
 
     public static OnlineBoardGameFragment newInstance(RoomOnline roomOnline) {
         OnlineBoardGameFragment fragment = new OnlineBoardGameFragment();
@@ -72,6 +77,8 @@ public class OnlineBoardGameFragment extends Fragment {
 
         setupRecyclerView();
         observeRoomData();
+        // 8.2.1: Trong khi trận đấu đang diễn ra, người chơi nhấn chọn nút "Thoát trận" trên giao diện
+        binding.ivBack.setOnClickListener(v -> showConfirmAbandonDialog());
     }
 
     private void setupRecyclerView() {
@@ -89,6 +96,16 @@ public class OnlineBoardGameFragment extends Fragment {
 
             // Xử lý chốt chặn ép kiểu từ Firebase
             if (card instanceof CardOnline) {
+            // Nếu game đã kết thúc, khóa tương tác không cho lật bài nữa (Bước 8.1.9)
+            if (isGameOver) return;
+            if (card instanceof CardOnline && roomOnline != null) {
+                if (roomOnline.getCurrentTurn() != null && !roomOnline.getCurrentTurn().equals(currentUserId)) {
+                    Log.d("SKU", roomOnline.getCurrentTurn() + " " + currentUserId);
+                    // 7.3.3 Hiển thị Toast cảnh báo "Chưa tới lượt của bạn!".
+                    Toast.makeText(requireContext(), "Chưa tới lượt của bạn!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                // 8.1.0: Người chơi thực hiện click và lật thành công cặp bài
                 onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);
             } else {
                 Log.e("TestUC7", "Lỗi dữ liệu: Thẻ truyền vào không phải CardOnline. Lớp hiện tại: " + card.getClass().getSimpleName());
@@ -110,7 +127,8 @@ public class OnlineBoardGameFragment extends Fragment {
     }
 
     private void observeRoomData() {
-        lobbyRoomViewModel.roomData.observe(getViewLifecycleOwner(), room -> {
+        onlineBoardGameViewModel.startListeningToRoomByCode(roomOnline.getRoomCode());
+        onlineBoardGameViewModel.roomOnline.observe(getViewLifecycleOwner(), room -> {
             if (room != null && room.getBoardGame() != null) {
                 this.roomOnline = room;
 
@@ -120,15 +138,22 @@ public class OnlineBoardGameFragment extends Fragment {
         });
 
         // [8.1.9] Hiện Dialog Kết Quả
+        // 8.1.9 & 8.2.7: Giao diện nhận tín hiệu đồng bộ thay đổi trạng thái, thực hiện khóa bàn và hiện Dialog
         onlineBoardGameViewModel.gameOverEvent.observe(getViewLifecycleOwner(), winnerId -> {
-            if (winnerId != null) showGameOverDialog(winnerId);
+            if (winnerId != null) {
+                isGameOver = true; // Thực thi lệnh lockBoardInteraction() (Khóa tương tác bàn cờ)
+                showGameOverDialog(winnerId); // Hiện hộp thoại kết quả
+            }
         });
 
-        // [8.3.4] Hiện thông báo mất mạng
+        // 8.3.4: Lỗi kết nối đồng bộ kết quả. Hệ thống hiển thị thông báo
         onlineBoardGameViewModel.networkError.observe(getViewLifecycleOwner(), isError -> {
             if (isError != null && isError) showNetworkErrorDialog();
         });
+
+
     }
+
 
     @Override
     public void onDestroyView() {
@@ -139,8 +164,9 @@ public class OnlineBoardGameFragment extends Fragment {
     private void showConfirmAbandonDialog() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Xác nhận rời trận")
-                .setMessage("Bạn có chắc chắn muốn bỏ cuộc? Bạn sẽ bị tính là THUA cuộc lập tức.")
-                .setPositiveButton("Rời phòng", (dialog, which) -> {
+                .setMessage("Bạn có chắc chắn muốn bỏ cuộc? Đối thủ sẽ lập tức giành chiến thắng.")
+                .setPositiveButton("Bỏ cuộc", (dialog, which) -> {
+                    // 8.2.2: Giao diện cục bộ bắt được sự kiện và kích hoạt khẩn cấp hàm abandonGame
                     onlineBoardGameViewModel.abandonGame(currentUserId, roomOnline);
                 })
                 .setNegativeButton("Ở lại", (dialog, which) -> dialog.dismiss())
@@ -151,11 +177,14 @@ public class OnlineBoardGameFragment extends Fragment {
     private void showGameOverDialog(String winnerId) {
         String title, msg;
         if ("DRAW".equals(winnerId)) {
-            title = "KẾT QUẢ HÒA!"; msg = "Cả hai đều có số điểm bằng nhau!";
+            title = "KẾT QUẢ HÒA!";
+            msg = "Cả hai đều có số điểm bằng nhau!";
         } else if (currentUserId.equals(winnerId)) {
-            title = "CHIẾN THẮNG! 🎉"; msg = "Bạn đã giành chiến thắng!";
+            title = "CHIẾN THẮNG! 🎉";
+            msg = "Bạn đã giành chiến thắng!";
         } else {
-            title = "THUA CUỘC 😢"; msg = "Đối thủ đã giành chiến thắng!";
+            title = "THUA CUỘC 😢";
+            msg = "Đối thủ đã giành chiến thắng!";
         }
 
         new AlertDialog.Builder(requireContext())
@@ -169,7 +198,7 @@ public class OnlineBoardGameFragment extends Fragment {
     private void showNetworkErrorDialog() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Lỗi kết nối mạng")
-                .setMessage("Không thể đồng bộ kết quả. Vui lòng kiểm tra Internet!")
+                .setMessage("Lỗi kết nối đồng bộ kết quả. Hệ thống đã lưu trữ tạm thời và sẽ tự động cập nhật lại khi mạng ổn định.")
                 .setPositiveButton("Đã hiểu", (dialog, which) -> dialog.dismiss())
                 .show();
     }

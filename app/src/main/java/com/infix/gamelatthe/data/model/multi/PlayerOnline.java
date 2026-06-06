@@ -19,6 +19,17 @@ public class PlayerOnline {
         this.role = role;
     }
 
+    @Override
+    public String toString() {
+        return "PlayerOnline{" +
+                "uuid='" + uuid + '\'' +
+                ", name='" + name + '\'' +
+                ", score=" + score +
+                ", isReady=" + isReady +
+                ", role='" + role + '\'' +
+                '}';
+    }
+
     public String getUuid() {
         return uuid;
     }
@@ -37,6 +48,22 @@ public class PlayerOnline {
 
     public String getRole() {
         return role;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setReady(boolean ready) {
+        isReady = ready;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
     }
 
     @Override
