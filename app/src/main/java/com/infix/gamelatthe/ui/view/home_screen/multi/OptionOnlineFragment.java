@@ -49,8 +49,8 @@ public class OptionOnlineFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         setEvent();
-        registerObserver();
         initHomeViewModel();
+        registerObserver();
     }
 
     @Override
@@ -101,6 +101,7 @@ public class OptionOnlineFragment extends Fragment {
     }
 
     private void showMessage(String msg) {
+        if(msg == null) return;
         Snackbar.make(binding.getRoot(), msg, Snackbar.LENGTH_SHORT).show();
     }
 
@@ -162,6 +163,11 @@ public class OptionOnlineFragment extends Fragment {
             String uuid = sharedPreferences.getString(MainActivity.KEY_UUID_USER, null);
             if (uuid == null) {
                 showMessage("Uuid chưa tồn tại");
+                return;
+            }
+
+            if (Boolean.FALSE.equals(homeViewModel.isNetworkValid.getValue())) {
+                showMessage("Mạng không khả dụng");
                 return;
             }
 
@@ -245,6 +251,12 @@ public class OptionOnlineFragment extends Fragment {
                 showMessage("Uuid chưa tồn tại");
                 return;
             }
+
+            if (Boolean.FALSE.equals(homeViewModel.isNetworkValid.getValue())) {
+                showMessage("Mạng không khả dụng");
+                return;
+            }
+
             PlayerOnline playerOnline = new PlayerOnline(
                     uuid,
                     guestName,

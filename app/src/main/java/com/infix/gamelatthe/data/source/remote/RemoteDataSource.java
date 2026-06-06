@@ -41,6 +41,12 @@ public class RemoteDataSource {
         void onError(String error);
     }
 
+    // Đổi tên từ LeaderboardCallback thành RoomQueryCallback để khớp với đặc tả
+    public interface RoomQueryCallback {
+        void onRoomsLoaded(List<RoomOnline> rooms);
+        void onError(String error);
+    }
+
     // LOAD LEVELS
     public void getLevels(LevelsCallback callback) {
         db.collection("levels")
@@ -359,5 +365,29 @@ public class RemoteDataSource {
             roomListenerRegistration.remove();
             roomListenerRegistration = null;
         }
+    }
+    // Cập nhật để sử dụng RoomQueryCallback
+    public void queryRoomsByUserUUID(String userUUID, RoomQueryCallback callback) {
+        db.collection("rooms")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+                    // 10.1.3 Firebase Firestore trả về danh sách các trận đấu tương ứng.
+                    List<RoomOnline> matchedRooms = new ArrayList<>();
+
+                    for (DocumentSnapshot doc : snapshot.getDocuments()) {
+                        RoomOnline room = doc.toObject(RoomOnline.class);
+                        if (room != null && room.getPlayers() != null) {
+                            for (PlayerOnline player : room.getPlayers()) {
+                                if (player.getUuid().equals(userUUID)) {
+                                    matchedRooms.add(room);
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    callback.onRoomsLoaded(matchedRooms); // Đổi onSuccess thành onRoomsLoaded
+                })
+                .addOnFailureListener(e -> callback.onError(e.getMessage())); // Đổi onFailure thành onError
     }
 }

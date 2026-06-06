@@ -24,6 +24,7 @@ import com.infix.gamelatthe.databinding.FragmentHomeBinding;
 import com.infix.gamelatthe.ui.view.board_game_screen.BoardGameFragment;
 import com.infix.gamelatthe.ui.view.history_screen.HistoryFragment;
 import com.infix.gamelatthe.ui.view.home_screen.multi.OptionOnlineFragment;
+import com.infix.gamelatthe.ui.view.leaderboard_screen.OnlineLeaderboardFragment;
 import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
 import com.infix.gamelatthe.ui.viewmodel.HomeViewModel;
 
@@ -31,8 +32,6 @@ import java.util.List;
 
 public class HomeFragment extends Fragment {
     private FragmentHomeBinding binding;
-    private Button btnStartGame;
-    private Button btnHistory;
 
     private HomeViewModel homeViewModel;
     private BoardGameViewModel boardGameViewModel;
@@ -60,32 +59,12 @@ public class HomeFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         initEvents();
         initViewModels();
-        registerObserver();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-        unregisterObserver();
-    }
-
-    private void registerObserver() {
-        try {
-            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
-            myApplication.registerObserver(homeViewModel);
-        } catch (Exception e) {
-            Log.e("SVU", e.getMessage());
-        }
-    }
-
-    private void unregisterObserver() {
-        try {
-            MyApplication myApplication = (MyApplication) requireActivity().getApplication();
-            myApplication.removeObserver(homeViewModel);
-        } catch (Exception e) {
-            Log.e("SVU", e.getMessage());
-        }
     }
 
     private void initEvents() {
@@ -104,6 +83,11 @@ public class HomeFragment extends Fragment {
         binding.btnStartGameOnline.setOnClickListener(v -> {
             //6.1.2 Hệ thống chuyển hướng sang giao diện sảnh trực tuyến
             goToOptionOnlineFragment();
+        });
+
+        // 10.1.0 Người chơi nhấn nút “Bảng Xếp Hạng” trên màn hình chính
+        binding.btnLeaderboard.setOnClickListener(v -> {
+            goToLeaderboardFragment();
         });
     }
 
@@ -159,6 +143,14 @@ public class HomeFragment extends Fragment {
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fcv_main, new OptionOnlineFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private void goToLeaderboardFragment() {
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fcv_main, new OnlineLeaderboardFragment())
                 .addToBackStack(null)
                 .commit();
     }

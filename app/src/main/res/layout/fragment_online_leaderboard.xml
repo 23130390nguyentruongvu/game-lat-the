@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".ui.view.leaderboard_screen.OnlineLeaderboardFragment">
+
+    <!-- Thêm nút quay lại để khớp với đặc tả 10.1.8 và file Test -->
+    <Button
+        android:id="@+id/btn_back"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Quay lại"
+        android:layout_marginBottom="8dp"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:drawableStart="@android:drawable/ic_menu_revert" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Lịch Sử Thi Đấu Trực Tuyến"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Sử dụng layout_weight để RecyclerView chiếm không gian còn lại -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_view_leaderboard"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone"
+        tools:listitem="@layout/item_match_history" />
+
+    <!-- Sử dụng layout_weight tương tự cho empty state -->
+    <LinearLayout
+        android:id="@+id/empty_state_view"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="visible">
+
+        <ImageView
+            android:layout_width="96dp"
+            android:layout_height="96dp"
+            android:src="@android:drawable/ic_menu_info_details"
+            android:contentDescription="No data"
+            android:alpha="0.5"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/empty_state_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đang tải lịch sử thi đấu..."
+            android:textSize="18sp"
+            android:textAlignment="center"
+            android:textColor="?android:attr/textColorSecondary" />
+
+    </LinearLayout>
+
+</LinearLayout>

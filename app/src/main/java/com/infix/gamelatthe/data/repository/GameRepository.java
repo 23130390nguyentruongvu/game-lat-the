@@ -51,5 +51,13 @@ public class GameRepository {
     public void updateBoardAndTurn(RoomOnline roomOnline) {
         gamePlayOnlineDataSource.updateBoardAndTurn(roomOnline);
     }
+    private final GamePlayOnlineDataSource gamePlayDataSource = new GamePlayOnlineDataSource();
 
+    public void endRoomOnline(String roomId, String finalStatus, String winnerId, RoomOnlineListener listener) {
+        gamePlayDataSource.endRoomOnline(roomId, finalStatus, winnerId, listener);
+    }
+
+    public void stopListeningToRoom() {
+        remoteDataSource.stopListening();
+    }
 }
