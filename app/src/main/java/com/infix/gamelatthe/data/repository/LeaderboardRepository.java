@@ -32,7 +32,9 @@ public class LeaderboardRepository {
 
                 List<MatchHistoryItem> historyItems = new ArrayList<>();
                 for (RoomOnline room : rooms) {
+                    // 10.1.4 Hệ thống xác định vai trò của người chơi trong từng trận đấu (HOST hoặc GUEST).
                     String role = determineRole(userUUID, room);
+                    // 10.1.5 Hệ thống xác định đối thủ, kết quả, độ khó, thời gian chơi và chuyển đổi sang MatchHistoryItem.
                     MatchHistoryItem item = mapToMatchHistoryItem(userUUID, room, role);
                     if (item != null) {
                         historyItems.add(item);

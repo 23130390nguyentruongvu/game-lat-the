@@ -206,6 +206,7 @@ public class RemoteDataSource {
         db.collection("rooms")
                 .get()
                 .addOnSuccessListener(snapshot -> {
+                    // 10.1.3 Firebase Firestore trả về danh sách các trận đấu tương ứng.
                     List<RoomOnline> matchedRooms = new ArrayList<>();
 
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {

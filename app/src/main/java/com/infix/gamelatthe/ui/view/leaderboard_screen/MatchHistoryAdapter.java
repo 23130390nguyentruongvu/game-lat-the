@@ -66,6 +66,7 @@ public class MatchHistoryAdapter extends ListAdapter<MatchHistoryItem, MatchHist
             return oldItem.roomId.equals(newItem.roomId); // Assuming roomId is unique
         }
 
+
         @Override
         public boolean areContentsTheSame(@NonNull MatchHistoryItem oldItem, @NonNull MatchHistoryItem newItem) {
             return oldItem.equals(newItem); // Requires MatchHistoryItem to implement equals()
