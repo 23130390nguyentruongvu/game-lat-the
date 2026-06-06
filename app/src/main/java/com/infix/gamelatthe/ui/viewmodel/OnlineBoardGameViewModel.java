@@ -18,17 +18,9 @@ import com.infix.gamelatthe.ui.GameRuleEngine;
 import java.util.List;
 
 public class OnlineBoardGameViewModel extends ViewModel {
-    private final GameRepository gameRepository;
+    private final GameRepository gameRepository = new GameRepository();
     private GameRuleEngine gameRuleEngine;
     private final Handler handler = new Handler(Looper.getMainLooper());
-
-    public OnlineBoardGameViewModel() {
-        this.gameRepository = new GameRepository();
-    }
-
-    public OnlineBoardGameViewModel(GameRepository repository) {
-        this.gameRepository = repository;
-    }
 
     private CardOnline firstCard = null;
     private CardOnline secondCard = null;
