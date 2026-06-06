@@ -22,7 +22,7 @@ public class OnlineBoardGameFragmentUC7Test {
 
     @Test
     public void khiVaoPhongGame_BanCoRecyclerView_PhaiHienThi() {
-        // Truyền dữ liệu giả lập cho Fragment y hệt sếp Vũ làm
+
         Bundle args = new Bundle();
         args.putString("ARG_USER_ROLE", "HOST");
         args.putString("ARG_ROOM_CODE", "ROOM_LAT_THE_999");
