@@ -116,6 +116,7 @@ public class OnlineBoardGameFragment extends Fragment {
                     Log.e("TestUC7", "Không thể ép kiểu! Kiểm tra lại UC-6 lúc tải BoardGame từ Firestore.");
                 }
             }
+        }
         });
 
         binding.rvBoardGame.setLayoutManager(new GridLayoutManager(requireContext(), 4));

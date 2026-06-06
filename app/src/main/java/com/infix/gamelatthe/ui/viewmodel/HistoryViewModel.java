@@ -20,7 +20,7 @@ public class HistoryViewModel extends ViewModel {
     private PlayHistoryDao playHistoryDao;
 
     public final MutableLiveData<UIState> _uiState = new MutableLiveData<>();
-//    public final MutableLiveData<List<PlayHistory>> _historyList = new MutableLiveData<>();
+    public final MutableLiveData<List<PlayHistory>> _historyList = new MutableLiveData<>();
     public final MutableLiveData<String> _errorMessage = new MutableLiveData<>();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 

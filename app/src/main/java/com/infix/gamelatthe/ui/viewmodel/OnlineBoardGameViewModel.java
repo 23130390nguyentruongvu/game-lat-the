@@ -19,6 +19,7 @@ import com.infix.gamelatthe.data.repository.GameRepository;
 import com.infix.gamelatthe.data.repository.MatchHistoryRepository;
 import com.infix.gamelatthe.ui.GameRuleEngine;
 
+import java.util.Date;
 import java.util.List;
 
 public class OnlineBoardGameViewModel extends ViewModel {
@@ -212,11 +213,16 @@ public class OnlineBoardGameViewModel extends ViewModel {
                 String opponentName = "";
                 int score = 0;
                 String role = "";
+                String result = "LOSE";
 
                 for (PlayerOnline p : currentRoom.getPlayers()) {
+
                     if (p.getUuid().equals(winnerId)) {
                         role = p.getRole();
                         score = p.getScore();
+                        result = "WIN";
+                    } else {
+                        opponentName = p.getName();
                     }
                 }
 
@@ -225,11 +231,11 @@ public class OnlineBoardGameViewModel extends ViewModel {
                         currentRoom.getDifficulty(),
                         role,
                         opponentName,
-                        winnerId.equals(currentRoom.getWinnerId()) ? "WIN" : "LOSE",
+                        result,
                         score,
                         (currentRoom.getBoardGame().getTimeEnd()
                                 - currentRoom.getBoardGame().getTimeInit()) / 1000,
-                        new java.util.Date()
+                        new Date()
                 );
 
                 matchHistoryRepository.saveMatchHistory(history, new MatchHistoryRepository.Callback() {
