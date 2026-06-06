@@ -12,9 +12,11 @@ import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.common.RoomSnapshotCallback;
 import com.infix.gamelatthe.data.model.Card;
 import com.infix.gamelatthe.data.model.multi.CardOnline;
+import com.infix.gamelatthe.data.model.multi.MatchHistoryItem;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.data.repository.GameRepository;
+import com.infix.gamelatthe.data.repository.MatchHistoryRepository;
 import com.infix.gamelatthe.ui.GameRuleEngine;
 
 import java.util.List;
@@ -38,7 +40,7 @@ public class OnlineBoardGameViewModel extends ViewModel {
 
     private final MutableLiveData<RoomOnline> _roomOnline = new MutableLiveData<>();
     public LiveData<RoomOnline> roomOnline = _roomOnline;
-
+    private final MatchHistoryRepository matchHistoryRepository = new MatchHistoryRepository();
     public void onCardClick(CardOnline clickedCard, RoomOnline currentRoom, String currentUserId) {
         if (isProcessing) return;
 
@@ -205,8 +207,44 @@ public class OnlineBoardGameViewModel extends ViewModel {
                  */
                 gameRepository.stopListeningToRoom();
 
-                // FIX LỖI 2: Dùng biến _gameOverEvent để gọi postValue
-                _gameOverEvent.postValue(winnerId);
+                // ======= UC-9 ADD START =======
+
+                String opponentName = "";
+                int score = 0;
+                String role = "";
+
+                for (PlayerOnline p : currentRoom.getPlayers()) {
+                    if (p.getUuid().equals(winnerId)) {
+                        role = p.getRole();
+                        score = p.getScore();
+                    }
+                }
+
+                MatchHistoryItem history = new MatchHistoryItem(
+                        currentRoom.getRoomId(),
+                        currentRoom.getDifficulty(),
+                        role,
+                        opponentName,
+                        winnerId.equals(currentRoom.getWinnerId()) ? "WIN" : "LOSE",
+                        score,
+                        (currentRoom.getBoardGame().getTimeEnd()
+                                - currentRoom.getBoardGame().getTimeInit()) / 1000,
+                        new java.util.Date()
+                );
+
+                matchHistoryRepository.saveMatchHistory(history, new MatchHistoryRepository.Callback() {
+                    @Override
+                    public void onSuccess() {
+                        _gameOverEvent.postValue(winnerId);
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        _networkError.postValue(true);
+                    }
+                });
+
+                // ======= UC-9 ADD END =======
             }
 
             @Override
