@@ -24,6 +24,7 @@ import com.infix.gamelatthe.databinding.FragmentHomeBinding;
 import com.infix.gamelatthe.ui.view.board_game_screen.BoardGameFragment;
 import com.infix.gamelatthe.ui.view.history_screen.HistoryFragment;
 import com.infix.gamelatthe.ui.view.home_screen.multi.OptionOnlineFragment;
+import com.infix.gamelatthe.ui.view.leaderboard_screen.OnlineLeaderboardFragment;
 import com.infix.gamelatthe.ui.viewmodel.BoardGameViewModel;
 import com.infix.gamelatthe.ui.viewmodel.HomeViewModel;
 
@@ -83,6 +84,11 @@ public class HomeFragment extends Fragment {
             //6.1.2 Hệ thống chuyển hướng sang giao diện sảnh trực tuyến
             goToOptionOnlineFragment();
         });
+
+        // 10.1.0 Người chơi nhấn nút “Bảng Xếp Hạng” trên màn hình chính
+        binding.btnLeaderboard.setOnClickListener(v -> {
+            goToLeaderboardFragment();
+        });
     }
 
     private void initViewModels() {
@@ -137,6 +143,14 @@ public class HomeFragment extends Fragment {
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fcv_main, new OptionOnlineFragment())
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private void goToLeaderboardFragment() {
+        requireActivity().getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fcv_main, new OnlineLeaderboardFragment())
                 .addToBackStack(null)
                 .commit();
     }

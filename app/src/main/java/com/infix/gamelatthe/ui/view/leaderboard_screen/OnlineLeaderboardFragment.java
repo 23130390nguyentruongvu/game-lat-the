@@ -6,7 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView; // Import TextView
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -28,7 +28,7 @@ public class OnlineLeaderboardFragment extends Fragment {
     private MatchHistoryAdapter adapter;
     private RecyclerView recyclerView;
     private View emptyStateView;
-    private TextView emptyStateTextView; // Added TextView for empty state message
+    private TextView emptyStateTextView;
 
     @Nullable
     @Override
@@ -44,11 +44,18 @@ public class OnlineLeaderboardFragment extends Fragment {
 
         recyclerView = view.findViewById(R.id.recycler_view_leaderboard);
         emptyStateView = view.findViewById(R.id.empty_state_view);
-        emptyStateTextView = view.findViewById(R.id.empty_state_text); // Initialize emptyStateTextView
+        emptyStateTextView = view.findViewById(R.id.empty_state_text);
 
         setupRecyclerView();
         observeHistory();
         loadUserHistory();
+
+        // 10.1.8 Người chơi nhấn "Quay lại" để trở về màn hình trước.
+        // 10.3.3 Người chơi có thể quay lại màn hình trước.
+        View btnBack = view.findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> requireActivity().getSupportFragmentManager().popBackStack());
+        }
     }
 
     private void setupRecyclerView() {
@@ -57,23 +64,23 @@ public class OnlineLeaderboardFragment extends Fragment {
         recyclerView.setAdapter(adapter);
     }
 
-    // 10.1.1 Hệ thống lấy UUID đã lưu trong SharedPreferences.
     private void loadUserHistory() {
+        // 10.1.1 Hệ thống lấy UUID đã lưu trong SharedPreferences.
         SharedPreferences prefs = requireActivity().getSharedPreferences("player_prefs", Context.MODE_PRIVATE);
         String userUUID = prefs.getString("user_uuid", null);
 
-        // 10.2 Alternate Flow - Chưa có UUID
+        // 10.2.1 Hệ thống không tìm thấy UUID trong SharedPreferences.
         if (userUUID == null) {
             // 10.2.2 Hệ thống tự động tạo UUID mới.
             userUUID = UUID.randomUUID().toString();
             // 10.2.3 Hệ thống lưu UUID mới vào SharedPreferences.
             prefs.edit().putString("user_uuid", userUUID).apply();
-            // 10.2.4 Hệ thống hiển thị thông báo
+            // 10.2.4 Hệ thống hiển thị thông báo: "Bạn chưa có lịch sử thi đấu trực tuyến."
             showEmptyState("Bạn chưa có lịch sử thi đấu trực tuyến.");
             return;
         }
 
-        // 10.1.2 Hệ thống gửi yêu cầu lấy lịch sử thi đấu
+        // 10.1.2 Hệ thống gửi yêu cầu lấy lịch sử thi đấu của người chơi theo UUID.
         viewModel.fetchUserHistory(userUUID);
     }
 
@@ -82,13 +89,14 @@ public class OnlineLeaderboardFragment extends Fragment {
         viewModel.getErrorMessage().observe(getViewLifecycleOwner(), this::showEmptyState);
     }
 
-    // 10.1.6 Hệ thống hiển thị danh sách lịch sử thi đấu
     private void showHistoryList(List<MatchHistoryItem> historyItems) {
+        // 10.1.6 Hệ thống hiển thị danh sách lịch sử thi đấu trực tuyến của người chơi.
         if (historyItems != null && !historyItems.isEmpty()) {
             adapter.submitList(historyItems);
             recyclerView.setVisibility(View.VISIBLE);
             emptyStateView.setVisibility(View.GONE);
         } else {
+            // 10.3.1 FireStore trả về danh sách rỗng.
             // 10.3.2 Hệ thống hiển thị trạng thái không có dữ liệu.
             showEmptyState("Không có lịch sử thi đấu nào.");
         }
@@ -98,8 +106,7 @@ public class OnlineLeaderboardFragment extends Fragment {
         recyclerView.setVisibility(View.GONE);
         emptyStateView.setVisibility(View.VISIBLE);
         if (emptyStateTextView != null) {
-            emptyStateTextView.setText(message); // Set text to the TextView
+            emptyStateTextView.setText(message);
         }
-        // Removed Toast.makeText as the message is now displayed in the layout
     }
 }

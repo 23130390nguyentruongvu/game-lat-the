@@ -23,7 +23,12 @@ public class LeaderboardViewModel extends ViewModel {
     }
 
     public LeaderboardViewModel() {
-        repository = new LeaderboardRepository();
+        this(new LeaderboardRepository());
+    }
+
+    // Constructor hỗ trợ Dependency Injection cho Testing
+    public LeaderboardViewModel(LeaderboardRepository repository) {
+        this.repository = repository;
     }
 
     // 10.1.2 Gửi yêu cầu truy vấn lịch sử thi đấu
