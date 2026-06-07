@@ -159,6 +159,13 @@ public class RemoteDataSource {
                 DocumentSnapshot doc = task.getResult().getDocuments().get(0);
                 RoomOnline room = parseRoomOnlineManual(doc);
                 if (room == null) { roomOnlineListener.onFailure(); return; }
+                //6.1.9 Hệ thống tiến hành khởi tạo ma trận thẻ trực tuyến trong phòng chơi:
+                //Hệ thống (máy Host) truy vấn dữ liệu cấu trúc thẻ bài gốc từ Collection boards/[difficulty]/cards của phiên bản 1.
+                //Thuật toán tại thiết bị Host thực hiện trộn ngẫu nhiên vị trí các thẻ bài vừa lấy về.
+                //Bổ sung thuộc tính trạng thái trực tuyến cho từng thẻ bài: isFlipped = false và isMatched = false.
+                //Đẩy toàn bộ mảng dữ liệu trạng thái bàn chơi (boardState) này lên Document của phòng chơi trên Firestore.
+                //Ngẫu nhiên chọn một người giữ lượt đi trước bằng cách gán ID vào trường currentTurn và đổi trạng thái phòng (status) sang "PLAYING".
+
                 db.collection("boards").document(room.getDifficulty().toUpperCase()).collection("cards").get().addOnCompleteListener(cardTask -> {
                     if (cardTask.isSuccessful() && cardTask.getResult() != null) {
                         List<Card> cards = new ArrayList<>();
@@ -186,6 +193,7 @@ public class RemoteDataSource {
                 PlayerOnline target = null;
                 for (PlayerOnline p : roomOnline.getPlayers()) if (p.getUuid().equals(uuid)) target = p;
                 if (target == null) { roomOnlineListener.onFailure(); return; }
+                //6.3.2 Hệ thống tiến hành cập nhật lại trạng thái trên cơ sở dữ liệu Firebase Firestore:
                 if (UserRole.HOST.role.equals(target.getRole())) {
                     db.collection("rooms").document(docSnap.getId()).delete().addOnSuccessListener(v -> roomOnlineListener.onSuccess("Deleted")).addOnFailureListener(e -> roomOnlineListener.onFailure());
                 } else {
