@@ -74,38 +74,62 @@ public class OnlineBoardGameViewModel extends ViewModel {
         this.currentUserId = currentUserId;
         if (isProcessing) return;
 
+        // [7.1.1] Hệ thống (ViewModel) kiểm tra: ID người chơi phải trùng với currentTurn và thẻ chưa bị lật (isFlipped = false).
         if (currentRoom.getCurrentTurn() == null || !currentRoom.getCurrentTurn().equals(currentUserId)) {
+            // Alternative Flow 2 <Thao tác sai lượt>
+            // [7.3.1] Hệ thống phát hiện ID người dùng thao tác không khớp với biến currentTurn.
+            // [7.3.2] Hệ thống chặn thao tác vật lý, từ chối gửi Request lên máy chủ.
             return;
         }
 
         if (clickedCard.isFlipped() || clickedCard.isMatched()) return;
 
         if (firstCard == null && secondCard == null) {
+            // [7.1.0] Người chơi chạm vào một thẻ đang úp trên giao diện bàn cờ.
             firstCard = clickedCard;
             updateCardStateInRoom(currentRoom, clickedCard.getId(), true, false);
+
+            // [7.1.2] (Trường hợp lật thẻ LẦN 1): Hệ thống đẩy lệnh cập nhật lên Firestore, chỉ thay đổi trường isFlipped = true.
             gameRepository.updateBoardAndTurn(currentRoom);
+
         } else if (firstCard != null && secondCard == null) {
             secondCard = clickedCard;
             updateCardStateInRoom(currentRoom, clickedCard.getId(), true, false);
+
+            // [7.1.4] (Trường hợp lật thẻ LẦN 2): Hệ thống ngay lập tức khóa giao diện tạm thời (chống spam click), cập nhật isFlipped = true lên Firestore.
             isProcessing = true;
             gameRepository.updateBoardAndTurn(currentRoom);
 
+            // [7.1.5] Hệ thống tiến hành kiểm tra quy tắc so khớp (Match Logic). Xác định hai thẻ.
             gameRuleEngine = new GameRuleEngine(currentRoom.getBoardGame());
 
             if (gameRuleEngine.matchTwoCard(firstCard, secondCard)) {
+                // [7.1.6] Hệ thống đẩy lệnh Atomic Update lên Firestore: (1) Cập nhật isMatched = true; (2) Cộng 1 điểm vào score.
                 updateCardStateInRoom(currentRoom, firstCard.getId(), true, true);
                 updateCardStateInRoom(currentRoom, secondCard.getId(), true, true);
                 addScoreForPlayer(currentRoom, currentUserId);
+
+                // [7.1.7] Hệ thống giữ nguyên lượt đi (currentTurn) cho người chơi hiện tại.
                 gameRepository.updateBoardAndTurn(currentRoom);
+
                 resetSelection();
                 isProcessing = false;
+
+                // [7.1.8] Hệ thống (UI) tự động gửi sự kiện để kích hoạt UC-8 (Kiểm tra kết thúc trực tuyến).
                 checkEndGameOnline(currentRoom, currentUserId);
             } else {
+                // Alternative Flow 1 <Không khớp thẻ>
+                // [7.2.1] Hệ thống xác định hai thẻ không trùng khớp.
+                // [7.2.2] Hệ thống thiết lập bộ đếm thời gian, giữ nguyên trạng thái ngửa của hai thẻ trong 1.5 giây.
                 handler.postDelayed(() -> {
+                    // [7.2.3] Sau 1.5 giây, hệ thống đẩy lệnh lên Firestore để cập nhật lại trạng thái hai thẻ về isFlipped = false.
                     updateCardStateInRoom(currentRoom, firstCard.getId(), false, false);
                     updateCardStateInRoom(currentRoom, secondCard.getId(), false, false);
+
+                    // [7.2.4] Hệ thống cập nhật biến currentTurn trên Firestore sang ID của đối thủ để chuyển giao lượt đi.
                     switchTurn(currentRoom);
                     gameRepository.updateBoardAndTurn(currentRoom);
+
                     resetSelection();
                     isProcessing = false;
                 }, 1500);
