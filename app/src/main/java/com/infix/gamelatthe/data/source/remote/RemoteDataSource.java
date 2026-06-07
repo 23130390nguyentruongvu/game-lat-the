@@ -1,11 +1,11 @@
 package com.infix.gamelatthe.data.source.remote;
 
 import android.util.Log;
-
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
+import com.google.firebase.firestore.Query;
 import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.common.RoomOnlineListener;
 import com.infix.gamelatthe.common.RoomSnapshotCallback;
@@ -13,12 +13,11 @@ import com.infix.gamelatthe.common.StatusRoomOnlineEnum;
 import com.infix.gamelatthe.common.UserRole;
 import com.infix.gamelatthe.data.model.BoardGame;
 import com.infix.gamelatthe.data.model.Card;
-
 import com.infix.gamelatthe.data.model.multi.CardOnline;
+import com.infix.gamelatthe.data.model.multi.MatchHistoryItem;
 import com.infix.gamelatthe.data.model.multi.PlayerOnline;
 import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.utils.AppUtils;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +26,6 @@ import java.util.Map;
 import java.util.Random;
 
 public class RemoteDataSource {
-
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private ListenerRegistration roomListenerRegistration;
 
@@ -46,119 +44,77 @@ public class RemoteDataSource {
         void onError(String error);
     }
 
-    // LOAD LEVELS
-    public void getLevels(LevelsCallback callback) {
-        db.collection("levels")
-                .get()
-                .addOnSuccessListener(query -> {
-                    List<String> levels = new ArrayList<>();
-                    for (DocumentSnapshot doc : query) {
-                        levels.add(doc.getId());
-                    }
-                    callback.onSuccess(levels);
-                })
-                .addOnFailureListener(e -> callback.onError(e.getMessage()));
+    // [10.1.2] Định nghĩa Interface để trả về lịch sử đấu cho UC10
+    public interface HistoryQueryCallback {
+        void onHistoryLoaded(List<MatchHistoryItem> history);
+        void onError(String error);
     }
 
-    // LOAD CARDS
+    public void getLevels(LevelsCallback callback) {
+        db.collection("levels").get().addOnSuccessListener(query -> {
+            List<String> levels = new ArrayList<>();
+            for (DocumentSnapshot doc : query) levels.add(doc.getId());
+            callback.onSuccess(levels);
+        }).addOnFailureListener(e -> callback.onError(e.getMessage()));
+    }
+
     public void getBoard(DifficultyEnum level, BoardCallback callback) {
-        db.collection("boards")
-                .document(level.name())
-                .collection("cards")
-                .get()
-                .addOnSuccessListener(query -> {
-                    List<Card> cards = new ArrayList<>();
-                    for (DocumentSnapshot doc : query) {
-                        Card c = doc.toObject(Card.class);
-                        if (c != null) cards.add(c);
-                    }
-                    callback.onSuccess(cards);
-                })
-                .addOnFailureListener(e -> callback.onError(e.getMessage()));
+        db.collection("boards").document(level.name()).collection("cards").get().addOnSuccessListener(query -> {
+            List<Card> cards = new ArrayList<>();
+            for (DocumentSnapshot doc : query) {
+                Card c = doc.toObject(Card.class);
+                if (c != null) cards.add(c);
+            }
+            callback.onSuccess(cards);
+        }).addOnFailureListener(e -> callback.onError(e.getMessage()));
     }
 
     public void createRoomOnline(PlayerOnline hostPlayer, String difficulty, RoomOnlineListener roomOnlineListener) {
         String potentialCode = AppUtils.generateUniqueCode();
-
-        db.collection("rooms")
-                .whereEqualTo("roomCode", potentialCode)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        if (!task.getResult().isEmpty()) {
-                            createRoomOnline(hostPlayer, difficulty, roomOnlineListener);
-                            return;
-                        }
-
-                        CollectionReference roomsRef = db.collection("rooms");
-                        String newRoomId = roomsRef.document().getId();
-
-                        List<PlayerOnline> playersList = new ArrayList<>();
-                        playersList.add(hostPlayer);
-
-                        RoomOnline newRoom = new RoomOnline();
-                        newRoom.setRoomId(newRoomId);
-                        newRoom.setRoomCode(potentialCode);
-                        newRoom.setStatus(StatusRoomOnlineEnum.WAITING.name());
-                        newRoom.setDifficulty(difficulty);
-                        newRoom.setPlayers(playersList);
-                        newRoom.setBoardGame(new BoardGame(new ArrayList<>(), 0L));
-                        newRoom.setCurrentTurn("");
-                        newRoom.setWinnerId("");
-
-                        roomsRef.document(newRoomId).set(newRoom)
-                                .addOnSuccessListener(aVoid -> roomOnlineListener.onSuccess(potentialCode))
-                                .addOnFailureListener(e -> roomOnlineListener.onFailure());
-                    } else {
-                        roomOnlineListener.onFailure();
-                    }
-                });
+        db.collection("rooms").whereEqualTo("roomCode", potentialCode).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                if (!task.getResult().isEmpty()) {
+                    createRoomOnline(hostPlayer, difficulty, roomOnlineListener);
+                    return;
+                }
+                String newRoomId = db.collection("rooms").document().getId();
+                List<PlayerOnline> playersList = new ArrayList<>();
+                playersList.add(hostPlayer);
+                RoomOnline newRoom = new RoomOnline(newRoomId, potentialCode, StatusRoomOnlineEnum.WAITING.name(), difficulty, "", "", null, playersList, new BoardGame(new ArrayList<>(), 0L));
+                db.collection("rooms").document(newRoomId).set(newRoom)
+                        .addOnSuccessListener(aVoid -> roomOnlineListener.onSuccess(potentialCode))
+                        .addOnFailureListener(e -> roomOnlineListener.onFailure());
+            } else {
+                roomOnlineListener.onFailure();
+            }
+        });
     }
 
     public void enterRoomOnline(PlayerOnline guestPlayer, String roomCode, RoomOnlineListener roomOnlineListener) {
-        db.collection("rooms")
-                .whereEqualTo("roomCode", roomCode)
-                .whereEqualTo("status", StatusRoomOnlineEnum.WAITING.name())
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null) {
-                        if (task.getResult().isEmpty()) {
-                            roomOnlineListener.onFailure();
-                            return;
-                        }
-
-                        DocumentSnapshot roomDoc = task.getResult().getDocuments().get(0);
-                        RoomOnline currentRoom = roomDoc.toObject(RoomOnline.class);
-
-                        if (currentRoom != null) {
-                            List<PlayerOnline> currentPlayers = currentRoom.getPlayers();
-                            if (currentPlayers == null) currentPlayers = new ArrayList<>();
-                            if (currentPlayers.size() >= 2) {
-                                roomOnlineListener.onFailure();
-                                return;
-                            }
-
-                            currentPlayers.add(guestPlayer);
-                            Map<String, Object> updates = new HashMap<>();
-                            updates.put("players", currentPlayers);
-
-                            db.collection("rooms").document(roomDoc.getId())
-                                    .update(updates)
-                                    .addOnSuccessListener(aVoid -> roomOnlineListener.onSuccess(roomCode))
-                                    .addOnFailureListener(e -> roomOnlineListener.onFailure());
-                        } else {
-                            roomOnlineListener.onFailure();
-                        }
-                    } else {
+        db.collection("rooms").whereEqualTo("roomCode", roomCode).whereEqualTo("status", StatusRoomOnlineEnum.WAITING.name()).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                DocumentSnapshot roomDoc = task.getResult().getDocuments().get(0);
+                RoomOnline currentRoom = roomDoc.toObject(RoomOnline.class);
+                if (currentRoom != null) {
+                    List<PlayerOnline> currentPlayers = new ArrayList<>(currentRoom.getPlayers());
+                    if (currentPlayers.size() >= 2) {
                         roomOnlineListener.onFailure();
+                        return;
                     }
-                });
+                    currentPlayers.add(guestPlayer);
+                    db.collection("rooms").document(roomDoc.getId()).update("players", currentPlayers)
+                            .addOnSuccessListener(aVoid -> roomOnlineListener.onSuccess(roomCode))
+                            .addOnFailureListener(e -> roomOnlineListener.onFailure());
+                }
+            } else {
+                roomOnlineListener.onFailure();
+            }
+        });
     }
 
     public void startListeningToRoomByCode(String roomCode, RoomSnapshotCallback callback) {
         stopListening();
-        roomListenerRegistration = db.collection("rooms")
-                .whereEqualTo("roomCode", roomCode)
+        roomListenerRegistration = db.collection("rooms").whereEqualTo("roomCode", roomCode)
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null) {
                         callback.onError(error);
@@ -166,111 +122,8 @@ public class RemoteDataSource {
                     }
                     if (snapshot != null && !snapshot.isEmpty()) {
                         RoomOnline room = parseRoomOnlineManual(snapshot.getDocuments().get(0));
-                        if (room != null) {
-                            callback.onDataChanged(room);
-                        }
-                    } else if (snapshot != null && snapshot.isEmpty()) {
-                        callback.onDataChanged(null);
+                        if (room != null) callback.onDataChanged(room);
                     }
-                });
-    }
-
-    public void leaveRoomOnline(String uuid, String roomCode, RoomOnlineListener roomOnlineListener) {
-        db.collection("rooms")
-                .whereEqualTo("roomCode", roomCode)
-                .get().addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
-                        DocumentSnapshot docSnap = task.getResult().getDocuments().get(0);
-                        RoomOnline roomOnline = parseRoomOnlineManual(docSnap);
-                        
-                        if (roomOnline == null || roomOnline.getPlayers() == null) {
-                            roomOnlineListener.onFailure();
-                            return;
-                        }
-
-                        PlayerOnline targetPlayer = null;
-                        for (PlayerOnline p : roomOnline.getPlayers()) {
-                            if (p.getUuid().equals(uuid)) {
-                                targetPlayer = p;
-                                break;
-                            }
-                        }
-
-                        if (targetPlayer == null) {
-                            roomOnlineListener.onFailure();
-                            return;
-                        }
-
-                        if (UserRole.HOST.role.equals(targetPlayer.getRole())) {
-                            db.collection("rooms").document(docSnap.getId()).delete()
-                                    .addOnSuccessListener(aVoid -> roomOnlineListener.onSuccess("Deleted"))
-                                    .addOnFailureListener(e -> roomOnlineListener.onFailure());
-                        } else {
-                            roomOnline.getPlayers().remove(targetPlayer);
-                            Map<String, Object> updates = new HashMap<>();
-                            updates.put("players", roomOnline.getPlayers());
-                            updates.put("status", StatusRoomOnlineEnum.WAITING.name());
-                            db.collection("rooms").document(docSnap.getId()).update(updates)
-                                    .addOnSuccessListener(aVoid -> roomOnlineListener.onSuccess("Left"))
-                                    .addOnFailureListener(e -> roomOnlineListener.onFailure());
-                        }
-                    } else {
-                        roomOnlineListener.onFailure();
-                    }
-                });
-    }
-
-    public void startGameOnline(String roomCode, RoomOnlineListener roomOnlineListener) {
-        db.collection("rooms")
-                .whereEqualTo("roomCode", roomCode)
-                .get()
-                .addOnCompleteListener(roomTask -> {
-                    if (!roomTask.isSuccessful() || roomTask.getResult() == null || roomTask.getResult().isEmpty()) {
-                        roomOnlineListener.onFailure();
-                        return;
-                    }
-
-                    DocumentSnapshot roomDocSnap = roomTask.getResult().getDocuments().get(0);
-                    RoomOnline roomOnline = parseRoomOnlineManual(roomDocSnap);
-
-                    if (roomOnline == null) {
-                        roomOnlineListener.onFailure();
-                        return;
-                    }
-
-                    db.collection("boards")
-                            .document(roomOnline.getDifficulty().toUpperCase())
-                            .collection("cards")
-                            .get()
-                            .addOnCompleteListener(cardsTask -> {
-                                if (!cardsTask.isSuccessful() || cardsTask.getResult() == null) {
-                                    roomOnlineListener.onFailure();
-                                    return;
-                                }
-
-                                List<Card> originalCards = new ArrayList<>();
-                                for (DocumentSnapshot cardDoc : cardsTask.getResult().getDocuments()) {
-                                    CardOnline card = cardDoc.toObject(CardOnline.class);
-                                    if (card != null) {
-                                        card.setFlipped(false);
-                                        card.setMatched(false);
-                                        originalCards.add(card);
-                                    }
-                                }
-                                Collections.shuffle(originalCards);
-
-                                String firstTurnId = roomOnline.getPlayers().get(new Random().nextInt(roomOnline.getPlayers().size())).getUuid();
-                                
-                                Map<String, Object> updates = new HashMap<>();
-                                BoardGame bg = new BoardGame(originalCards, System.currentTimeMillis());
-                                updates.put("boardGame", bg);
-                                updates.put("currentTurn", firstTurnId);
-                                updates.put("status", StatusRoomOnlineEnum.PLAYING.name());
-
-                                db.collection("rooms").document(roomDocSnap.getId()).update(updates)
-                                        .addOnSuccessListener(aVoid -> roomOnlineListener.onSuccess("Started"))
-                                        .addOnFailureListener(e -> roomOnlineListener.onFailure());
-                            });
                 });
     }
 
@@ -281,27 +134,65 @@ public class RemoteDataSource {
         }
     }
 
-    public void queryRoomsByUserUUID(String userUUID, RoomQueryCallback callback) {
-        db.collection("rooms")
+    // [10.1.2] Gửi yêu cầu truy vấn lịch sử thi đấu của người chơi theo userUUID
+    public void queryMatchHistoryByUserUUID(String userUUID, HistoryQueryCallback callback) {
+        db.collection("match_history")
+                .whereEqualTo("userUUID", userUUID)
+                .orderBy("createAt", Query.Direction.DESCENDING)
                 .get()
                 .addOnSuccessListener(snapshot -> {
-                    // 10.1.3 Firebase Firestore trả về danh sách các trận đấu tương ứng.
-                    List<RoomOnline> matchedRooms = new ArrayList<>();
+                    // [10.1.3] Firebase Firestore trả về danh sách lịch sử tương ứng
+                    List<MatchHistoryItem> history = new ArrayList<>();
                     for (DocumentSnapshot doc : snapshot.getDocuments()) {
-                        // QUAN TRỌNG: Dùng hàm parse thủ công để lấy đầy đủ dữ liệu mảng players từ Firestore
-                        RoomOnline room = parseRoomOnlineManual(doc);
-                        if (room != null && room.getPlayers() != null) {
-                            for (PlayerOnline player : room.getPlayers()) {
-                                if (player.getUuid() != null && player.getUuid().equals(userUUID)) {
-                                    matchedRooms.add(room);
-                                    break;
-                                }
-                            }
-                        }
+                        MatchHistoryItem item = doc.toObject(MatchHistoryItem.class);
+                        if (item != null) history.add(item);
                     }
-                    callback.onRoomsLoaded(matchedRooms);
+                    callback.onHistoryLoaded(history);
                 })
                 .addOnFailureListener(e -> callback.onError(e.getMessage()));
+    }
+
+    public void startGameOnline(String roomCode, RoomOnlineListener roomOnlineListener) {
+        db.collection("rooms").whereEqualTo("roomCode", roomCode).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                DocumentSnapshot doc = task.getResult().getDocuments().get(0);
+                RoomOnline room = parseRoomOnlineManual(doc);
+                if (room == null) { roomOnlineListener.onFailure(); return; }
+                db.collection("boards").document(room.getDifficulty().toUpperCase()).collection("cards").get().addOnCompleteListener(cardTask -> {
+                    if (cardTask.isSuccessful() && cardTask.getResult() != null) {
+                        List<Card> cards = new ArrayList<>();
+                        for (DocumentSnapshot cDoc : cardTask.getResult()) {
+                            CardOnline co = cDoc.toObject(CardOnline.class);
+                            if (co != null) { co.setFlipped(false); co.setMatched(false); cards.add(co); }
+                        }
+                        Collections.shuffle(cards);
+                        String firstTurn = room.getPlayers().get(new Random().nextInt(room.getPlayers().size())).getUuid();
+                        db.collection("rooms").document(doc.getId()).update("boardGame", new BoardGame(cards, System.currentTimeMillis()), "currentTurn", firstTurn, "status", StatusRoomOnlineEnum.PLAYING.name())
+                                .addOnSuccessListener(v -> roomOnlineListener.onSuccess("Started"))
+                                .addOnFailureListener(e -> roomOnlineListener.onFailure());
+                    }
+                });
+            }
+        });
+    }
+
+    public void leaveRoomOnline(String uuid, String roomCode, RoomOnlineListener roomOnlineListener) {
+        db.collection("rooms").whereEqualTo("roomCode", roomCode).get().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                DocumentSnapshot docSnap = task.getResult().getDocuments().get(0);
+                RoomOnline roomOnline = parseRoomOnlineManual(docSnap);
+                if (roomOnline == null || roomOnline.getPlayers() == null) { roomOnlineListener.onFailure(); return; }
+                PlayerOnline target = null;
+                for (PlayerOnline p : roomOnline.getPlayers()) if (p.getUuid().equals(uuid)) target = p;
+                if (target == null) { roomOnlineListener.onFailure(); return; }
+                if (UserRole.HOST.role.equals(target.getRole())) {
+                    db.collection("rooms").document(docSnap.getId()).delete().addOnSuccessListener(v -> roomOnlineListener.onSuccess("Deleted")).addOnFailureListener(e -> roomOnlineListener.onFailure());
+                } else {
+                    roomOnline.getPlayers().remove(target);
+                    db.collection("rooms").document(docSnap.getId()).update("players", roomOnline.getPlayers(), "status", StatusRoomOnlineEnum.WAITING.name()).addOnSuccessListener(v -> roomOnlineListener.onSuccess("Left")).addOnFailureListener(e -> roomOnlineListener.onFailure());
+                }
+            }
+        });
     }
 
     private RoomOnline parseRoomOnlineManual(DocumentSnapshot document) {
@@ -314,49 +205,33 @@ public class RemoteDataSource {
             room.setCurrentTurn(document.getString("currentTurn"));
             room.setWinnerId(document.getString("winnerId"));
             room.setCreateAt(document.getDate("createAt"));
-
-            List<Map<String, Object>> playersMapList = (List<Map<String, Object>>) document.get("players");
-            List<PlayerOnline> playersList = new ArrayList<>();
-            if (playersMapList != null) {
-                for (Map<String, Object> playerMap : playersMapList) {
-                    PlayerOnline player = new PlayerOnline();
-                    player.setUuid((String) playerMap.get("uuid"));
-                    player.setName((String) playerMap.get("name"));
-                    player.setRole((String) playerMap.get("role"));
-                    if (playerMap.get("score") != null) player.setScore(((Number) playerMap.get("score")).intValue());
-                    player.setReady(Boolean.TRUE.equals(playerMap.get("ready")));
-                    playersList.add(player);
+            List<Map<String, Object>> pMaps = (List<Map<String, Object>>) document.get("players");
+            List<PlayerOnline> pList = new ArrayList<>();
+            if (pMaps != null) {
+                for (Map<String, Object> m : pMaps) {
+                    PlayerOnline p = new PlayerOnline((String) m.get("uuid"), (String) m.get("name"), m.get("score") != null ? ((Number) m.get("score")).intValue() : 0, Boolean.TRUE.equals(m.get("ready")), (String) m.get("role"));
+                    pList.add(p);
                 }
             }
-            room.setPlayers(playersList);
-
-            Map<String, Object> boardGameMap = (Map<String, Object>) document.get("boardGame");
-            if (boardGameMap != null) {
-                BoardGame boardGame = new BoardGame();
-                boardGame.setTimeInit(boardGameMap.get("timeInit") != null ? ((Number) boardGameMap.get("timeInit")).longValue() : 0L);
-                boardGame.setTimeEnd(boardGameMap.get("timeEnd") != null ? ((Number) boardGameMap.get("timeEnd")).longValue() : 0L);
-
-                List<Map<String, Object>> cardsMapList = (List<Map<String, Object>>) boardGameMap.get("cards");
-                List<Card> cards = new ArrayList<>();
-                if (cardsMapList != null) {
-                    for (Map<String, Object> cardMap : cardsMapList) {
-                        CardOnline card = new CardOnline();
-                        if (cardMap.get("id") != null) card.setId(((Number) cardMap.get("id")).intValue());
-                        if (cardMap.get("groupId") != null) card.setGroupId(((Number) cardMap.get("groupId")).intValue());
-                        card.setUrlImage((String) cardMap.get("urlImage"));
-                        card.setFlipped(Boolean.TRUE.equals(cardMap.get("flipped")));
-                        card.setEnable(Boolean.TRUE.equals(cardMap.get("enable")));
-                        card.setMatched(Boolean.TRUE.equals(cardMap.get("matched")));
-                        cards.add(card);
+            room.setPlayers(pList);
+            Map<String, Object> bgMap = (Map<String, Object>) document.get("boardGame");
+            if (bgMap != null) {
+                BoardGame bg = new BoardGame();
+                bg.setTimeInit(bgMap.get("timeInit") != null ? ((Number) bgMap.get("timeInit")).longValue() : 0L);
+                bg.setTimeEnd(bgMap.get("timeEnd") != null ? ((Number) bgMap.get("timeEnd")).longValue() : 0L);
+                List<Map<String, Object>> cMaps = (List<Map<String, Object>>) bgMap.get("cards");
+                List<Card> cList = new ArrayList<>();
+                if (cMaps != null) {
+                    for (Map<String, Object> cm : cMaps) {
+                        CardOnline co = new CardOnline(cm.get("id") != null ? ((Number) cm.get("id")).intValue() : 0, cm.get("groupId") != null ? ((Number) cm.get("groupId")).intValue() : 0, (String) cm.get("urlImage"), Boolean.TRUE.equals(cm.get("flipped")));
+                        co.setMatched(Boolean.TRUE.equals(cm.get("matched")));
+                        cList.add(co);
                     }
                 }
-                boardGame.setCards(cards);
-                room.setBoardGame(boardGame);
+                bg.setCards(cList);
+                room.setBoardGame(bg);
             }
             return room;
-        } catch (Exception e) {
-            Log.e("RemoteDataSource", "Error parsing room: " + e.getMessage());
-            return null;
-        }
+        } catch (Exception e) { return null; }
     }
 }

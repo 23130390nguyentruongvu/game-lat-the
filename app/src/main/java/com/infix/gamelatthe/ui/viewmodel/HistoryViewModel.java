@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.Query;
 import com.infix.gamelatthe.common.UIState;
 import com.infix.gamelatthe.data.model.PlayHistory;
 
@@ -15,12 +16,13 @@ import java.util.concurrent.Executors;
 
 import com.infix.gamelatthe.data.model.multi.MatchHistoryItem;
 import com.infix.gamelatthe.data.source.local.PlayHistoryDao;
+
 public class HistoryViewModel extends ViewModel {
 
     private PlayHistoryDao playHistoryDao;
 
     public final MutableLiveData<UIState> _uiState = new MutableLiveData<>();
-   public final MutableLiveData<List<PlayHistory>> _historyList = new MutableLiveData<>();
+    public final MutableLiveData<List<PlayHistory>> _historyList = new MutableLiveData<>();
     public final MutableLiveData<String> _errorMessage = new MutableLiveData<>();
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
@@ -43,55 +45,56 @@ public class HistoryViewModel extends ViewModel {
 
         executorService.execute(() -> {
             try {
-                // 5.1.8 ViewModel gọi Repository/Source để lấy top 10 theo cấp độ
                 List<PlayHistory> list = playHistoryDao.getTop10ByDifficulty(difficulty);
 
                 if (list == null || list.isEmpty()) {
-                    // RẼ NHÁNH TỪ 5.1.9: Không có dữ liệu lịch sử
-                    // 5.2.1 ViewModel trả về danh sách rỗng (Thông qua việc view không nhận được list mới, hoặc set list rỗng nếu cần)
-                    // 5.2.2 ViewModel cập nhật lại trạng thái dữ liệu mà View đang quan sát (EMPTY)
                     _uiState.postValue(UIState.EMPTY);
                 } else {
-                    // 5.1.9 ViewModel trả về danh sách top 10 cho View
                     _historyList.postValue(list);
                     _uiState.postValue(UIState.SUCCESS);
                 }
             } catch (Exception e) {
-                // RẼ NHÁNH TỪ 5.1.9 (Exceptions): Lỗi lấy dữ liệu
-                // 5.3.1 Nhận lỗi từ Repository/Source (Biến 'e')
-                // 5.3.2 ViewModel cập nhật lại trạng thái lỗi
                 _errorMessage.postValue(e.getMessage());
                 _uiState.postValue(UIState.ERROR);
             }
         });
     }
 
-    public void loadMatchHistory() {
+    /**
+     * [10.1.2] Gửi yêu cầu lấy lịch sử thi đấu của người chơi theo userUUID.
+     */
+    public void loadMatchHistory(String userUUID) {
+        if (userUUID == null || userUUID.isEmpty()) return;
 
         db.collection("match_history")
-                .orderBy("createAt")
+                .whereEqualTo("userUUID", userUUID) // Lọc đúng trận đấu của người dùng hiện tại
+                .orderBy("createAt", Query.Direction.DESCENDING) // Sắp xếp trận mới nhất lên đầu
                 .get()
                 .addOnSuccessListener(snapshot -> {
-
                     List<MatchHistoryItem> list = new ArrayList<>();
 
                     for (DocumentSnapshot doc : snapshot) {
-
+                        // [10.1.3] Firebase Firestore trả về danh sách
+                        // Cập nhật Constructor 9 tham số (thêm userUUID ở đầu)
                         MatchHistoryItem item = new MatchHistoryItem(
+                                doc.getString("userUUID"),
                                 doc.getString("roomId"),
                                 doc.getString("difficulty"),
                                 doc.getString("role"),
                                 doc.getString("opponentName"),
                                 doc.getString("result"),
-                                doc.getLong("score").intValue(),
-                                doc.getLong("playTime"),
+                                doc.get("score") != null ? ((Number) doc.get("score")).intValue() : 0,
+                                doc.get("playTime") != null ? ((Number) doc.get("playTime")).longValue() : 0L,
                                 doc.getDate("createAt")
                         );
 
                         list.add(item);
                     }
-
+                    // [10.1.6] Hệ thống cập nhật danh sách hiển thị
                     matchHistory.setValue(list);
+                })
+                .addOnFailureListener(e -> {
+                    _errorMessage.setValue("Lỗi tải lịch sử: " + e.getMessage());
                 });
     }
 }
