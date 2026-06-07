@@ -42,12 +42,6 @@ public class HistoryFragment extends Fragment {
         observeData();
 
         setupClickListeners();
-
-        viewModel.loadMatchHistory();
-
-        viewModel.matchHistory.observe(getViewLifecycleOwner(), list -> {
-            adapter.updateList(list);
-        });
     }
 
     private void setupRecyclerView() {
@@ -65,7 +59,7 @@ public class HistoryFragment extends Fragment {
     }
 
     private void observeData() {
-        viewModel.matchHistory.observe(getViewLifecycleOwner(), playHistories -> {
+        viewModel._historyList.observe(getViewLifecycleOwner(), playHistories -> {
             // 5.1.9 ViewModel trả về danh sách top 10 cho View (Thông qua playHistories)
             if (playHistories != null) {
                 // 5.1.10 View hiển thị danh sách top 10 lên màn hình
