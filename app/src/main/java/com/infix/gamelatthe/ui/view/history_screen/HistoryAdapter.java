@@ -6,7 +6,7 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.infix.gamelatthe.data.model.PlayHistory;
+import com.infix.gamelatthe.data.model.multi.MatchHistoryItem;
 import com.infix.gamelatthe.databinding.ItemHistoryBinding;
 
 import java.util.ArrayList;
@@ -15,9 +15,9 @@ import java.util.Locale;
 
 public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHolder> {
 
-    private List<PlayHistory> listData = new ArrayList<>();
+    private List<MatchHistoryItem> listData = new ArrayList<>();
 
-    public void updateList(List<PlayHistory> list) {
+    public void updateList(List<MatchHistoryItem> list) {
         this.listData = list;
         notifyDataSetChanged();
     }
@@ -25,28 +25,30 @@ public class HistoryAdapter extends RecyclerView.Adapter<HistoryAdapter.ViewHold
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        ItemHistoryBinding binding = ItemHistoryBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
+        ItemHistoryBinding binding = ItemHistoryBinding.inflate(
+                LayoutInflater.from(parent.getContext()), parent, false);
         return new ViewHolder(binding);
     }
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        PlayHistory item = listData.get(position);
+
+        // ✔ FIX 1: đổi PlayHistory → MatchHistoryItem
+        MatchHistoryItem item = listData.get(position);
 
         holder.binding.tvRank.setText(String.valueOf(position + 1));
 
-        String playerName = item.playerName != null ? item.playerName : "Unknown";
-        holder.binding.tvPlayerName.setText(playerName);
+        String opponentName = item.opponentName != null ? item.opponentName : "Unknown";
+        holder.binding.tvPlayerName.setText(opponentName);
 
-        long duration = item.endTime - item.initTime;
-
-        if (duration < 0) duration = 0;
+        long duration = item.playTime * 1000; // playTime đang là giây
 
         long seconds = (duration / 1000) % 60;
         long minutes = (duration / (1000 * 60)) % 60;
 
-        // Định dạng hiển thị chuỗi "02:05"
-        holder.binding.tvTime.setText(String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds));
+        holder.binding.tvTime.setText(
+                String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds)
+        );
     }
 
     @Override

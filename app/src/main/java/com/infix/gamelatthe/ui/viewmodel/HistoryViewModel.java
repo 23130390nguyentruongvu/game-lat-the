@@ -2,20 +2,29 @@ package com.infix.gamelatthe.ui.viewmodel;
 
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
+
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.infix.gamelatthe.common.UIState;
 import com.infix.gamelatthe.data.model.PlayHistory;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.infix.gamelatthe.data.model.multi.MatchHistoryItem;
 import com.infix.gamelatthe.data.source.local.PlayHistoryDao;
 public class HistoryViewModel extends ViewModel {
 
     private PlayHistoryDao playHistoryDao;
 
     public final MutableLiveData<UIState> _uiState = new MutableLiveData<>();
-    public final MutableLiveData<List<PlayHistory>> _historyList = new MutableLiveData<>();
+//    public final MutableLiveData<List<PlayHistory>> _historyList = new MutableLiveData<>();
     public final MutableLiveData<String> _errorMessage = new MutableLiveData<>();
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+    public final MutableLiveData<List<MatchHistoryItem>> matchHistory = new MutableLiveData<>();
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 
@@ -55,5 +64,34 @@ public class HistoryViewModel extends ViewModel {
                 _uiState.postValue(UIState.ERROR);
             }
         });
+    }
+
+    public void loadMatchHistory() {
+
+        db.collection("match_history")
+                .orderBy("createAt")
+                .get()
+                .addOnSuccessListener(snapshot -> {
+
+                    List<MatchHistoryItem> list = new ArrayList<>();
+
+                    for (DocumentSnapshot doc : snapshot) {
+
+                        MatchHistoryItem item = new MatchHistoryItem(
+                                doc.getString("roomId"),
+                                doc.getString("difficulty"),
+                                doc.getString("role"),
+                                doc.getString("opponentName"),
+                                doc.getString("result"),
+                                doc.getLong("score").intValue(),
+                                doc.getLong("playTime"),
+                                doc.getDate("createAt")
+                        );
+
+                        list.add(item);
+                    }
+
+                    matchHistory.setValue(list);
+                });
     }
 }
