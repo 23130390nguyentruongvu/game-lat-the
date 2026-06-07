@@ -31,6 +31,21 @@ public class RoomOnline implements Serializable {
         this.boardGame = boardGame;
     }
 
+    @Override
+    public String toString() {
+        return "RoomOnline{" +
+                "roomId='" + roomId + '\'' +
+                ", roomCode='" + roomCode + '\'' +
+                ", status='" + status + '\'' +
+                ", difficulty='" + difficulty + '\'' +
+                ", currentTurn='" + currentTurn + '\'' +
+                ", winnerId='" + winnerId + '\'' +
+                ", createAt=" + createAt +
+                ", players=" + players +
+                ", boardGame=" + boardGame +
+                '}';
+    }
+
     public String getRoomId() {
         return roomId;
     }

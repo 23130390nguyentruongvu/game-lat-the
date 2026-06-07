@@ -1,9 +1,11 @@
 package com.infix.gamelatthe.data.model.multi;
 
+import com.infix.gamelatthe.data.model.PlayHistory;
+
 import java.util.Date; // Import Date
 import java.util.Objects;
 
-public class MatchHistoryItem {
+public class MatchHistoryItem  {
     public String roomId;
     public String difficulty;
     public String role; // HOST or GUEST

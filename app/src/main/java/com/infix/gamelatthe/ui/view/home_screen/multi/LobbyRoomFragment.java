@@ -129,6 +129,7 @@ public class LobbyRoomFragment extends Fragment {
             lobbyRoomViewModel.startListeningToRoomByCode(roomCode, new RoomSnapshotCallback() {
                 @Override
                 public void onDataChanged(RoomOnline room) {
+                    Log.d("SVU", room.toString());
                     lobbyRoomViewModel.setRoomOnlineState(room);
                 }
 
@@ -235,6 +236,7 @@ public class LobbyRoomFragment extends Fragment {
     }
 
     private void navigateToBoardGameOnline(RoomOnline room) {
+        Log.d("LIL", room.toString());
         showMessage("Bắt đầu game");
         requireActivity().getSupportFragmentManager()
                 .beginTransaction()

@@ -21,22 +21,19 @@ import com.infix.gamelatthe.data.model.multi.RoomOnline;
 import com.infix.gamelatthe.databinding.FragmentOnlineBoardGameBinding;
 import com.infix.gamelatthe.ui.view.MainActivity;
 import com.infix.gamelatthe.ui.view.board_game_screen.BoardGameAdapter;
-import com.infix.gamelatthe.ui.viewmodel.LobbyRoomViewModel;
 import com.infix.gamelatthe.ui.viewmodel.OnlineBoardGameViewModel;
-
 
 public class OnlineBoardGameFragment extends Fragment {
     private FragmentOnlineBoardGameBinding binding;
     private static final String ARG_ROOM_ONLINE = "ARG_ROOM_ONLINE";
 
-    private RoomOnline roomOnline;
-    private LobbyRoomViewModel lobbyRoomViewModel;
     private OnlineBoardGameViewModel onlineBoardGameViewModel;
     private BoardGameAdapter boardGameAdapter;
     private String currentUserId;
 
-    // Thêm cờ để khóa bàn cờ theo bước 8.1.9
+    private RoomOnline roomOnline;
     private boolean isGameOver = false;
+
     public static OnlineBoardGameFragment newInstance(RoomOnline roomOnline) {
         OnlineBoardGameFragment fragment = new OnlineBoardGameFragment();
         Bundle args = new Bundle();
@@ -52,7 +49,7 @@ public class OnlineBoardGameFragment extends Fragment {
             try {
                 roomOnline = (RoomOnline) getArguments().getSerializable(ARG_ROOM_ONLINE);
             } catch (Exception e) {
-                Log.e("OnlineBoardGameFragment", e.getMessage());
+                Log.e("OnlineBoardGameFragment", "Error getting args: " + e.getMessage());
             }
         }
     }
@@ -70,26 +67,34 @@ public class OnlineBoardGameFragment extends Fragment {
         SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(MainActivity.FILE_INFO_USER, Context.MODE_PRIVATE);
         currentUserId = sharedPreferences.getString(MainActivity.KEY_UUID_USER, "");
 
-        lobbyRoomViewModel = new ViewModelProvider(requireActivity()).get(LobbyRoomViewModel.class);
         onlineBoardGameViewModel = new ViewModelProvider(this).get(OnlineBoardGameViewModel.class);
 
         setupRecyclerView();
         observeRoomData();
-        // 8.2.1: Trong khi trận đấu đang diễn ra, người chơi nhấn chọn nút "Thoát trận" trên giao diện
+
         binding.ivBack.setOnClickListener(v -> showConfirmAbandonDialog());
     }
 
     private void setupRecyclerView() {
         boardGameAdapter = new BoardGameAdapter(card -> {
-            // Nếu game đã kết thúc, khóa tương tác không cho lật bài nữa (Bước 8.1.9)
+            // [8.1.9] Khóa tương tác nếu game đã kết thúc
             if (isGameOver) return;
-            if (card instanceof CardOnline && roomOnline != null) {
-                if (roomOnline.getCurrentTurn() != null && !roomOnline.getCurrentTurn().equals(currentUserId)) {
-                    // 7.3.3 Hiển thị Toast cảnh báo "Chưa tới lượt của bạn!".
-                    Toast.makeText(requireContext(), "Chưa tới lượt của bạn!", Toast.LENGTH_SHORT).show();
-                }
-            // 8.1.0: Người chơi thực hiện click và lật thành công cặp bài
-                onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);            }
+            if (roomOnline == null) return;
+
+            // [7.1.1] Kiểm tra lượt đi
+            if (roomOnline.getCurrentTurn() != null && !roomOnline.getCurrentTurn().equals(currentUserId)) {
+                // [7.3.3] Thông báo sai lượt
+                Toast.makeText(requireContext(), "Chưa tới lượt của bạn!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // [7.1.0] Người chơi chạm vào thẻ
+            if (card instanceof CardOnline) {
+                // [8.1.0] Kích hoạt logic lật thẻ
+                onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);
+            } else {
+                Log.e("OnlineBoardGameFragment", "Lỗi dữ liệu: Thẻ không phải CardOnline");
+            }
         });
 
         binding.rvBoardGame.setLayoutManager(new GridLayoutManager(requireContext(), 4));
@@ -101,32 +106,38 @@ public class OnlineBoardGameFragment extends Fragment {
     }
 
     private void observeRoomData() {
-        lobbyRoomViewModel.roomData.observe(getViewLifecycleOwner(), room -> {
+        if (roomOnline != null) {
+            onlineBoardGameViewModel.startListeningToRoomByCode(roomOnline.getRoomCode());
+        }
+
+        onlineBoardGameViewModel.roomOnline.observe(getViewLifecycleOwner(), room -> {
             if (room != null && room.getBoardGame() != null) {
                 this.roomOnline = room;
 
-                // 7.1.3 Trình lắng nghe nhận sự kiện, đồng bộ hoạt họa lật ngửa thẻ.
+                // [7.1.3] Cập nhật giao diện đồng bộ theo Firestore
                 boardGameAdapter.updateCards(room.getBoardGame().getCards());
-            }
-        });
-        // 8.1.9 & 8.2.7: Giao diện nhận tín hiệu đồng bộ thay đổi trạng thái, thực hiện khóa bàn và hiện Dialog
-        onlineBoardGameViewModel.gameOverEvent.observe(getViewLifecycleOwner(), winnerId -> {
-            if (winnerId != null) {
-                isGameOver = true; // Thực thi lệnh lockBoardInteraction() (Khóa tương tác bàn cờ)
-                showGameOverDialog(winnerId); // Hiện hộp thoại kết quả
+
+                // [8.1.9] Kiểm tra kết thúc từ Snapshot
+                if (!isGameOver && room.getStatus() != null &&
+                        (room.getStatus().equals("FINISHED") || room.getStatus().equals("ABANDONED"))) {
+                    isGameOver = true;
+                    showGameOverDialog(room.getWinnerId());
+                }
             }
         });
 
-        // 8.3.4: Lỗi kết nối đồng bộ kết quả. Hệ thống hiển thị thông báo
+        // [8.1.9] Tín hiệu kết thúc từ ViewModel
+        onlineBoardGameViewModel.gameOverEvent.observe(getViewLifecycleOwner(), winnerId -> {
+            if (winnerId != null && !isGameOver) {
+                isGameOver = true;
+                showGameOverDialog(winnerId);
+            }
+        });
+
+        // [8.3.4] Thông báo lỗi mạng
         onlineBoardGameViewModel.networkError.observe(getViewLifecycleOwner(), isError -> {
             if (isError != null && isError) showNetworkErrorDialog();
         });
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
     }
 
     private void showConfirmAbandonDialog() {
@@ -134,7 +145,7 @@ public class OnlineBoardGameFragment extends Fragment {
                 .setTitle("Xác nhận rời trận")
                 .setMessage("Bạn có chắc chắn muốn bỏ cuộc? Đối thủ sẽ lập tức giành chiến thắng.")
                 .setPositiveButton("Bỏ cuộc", (dialog, which) -> {
-                    // 8.2.2: Giao diện cục bộ bắt được sự kiện và kích hoạt khẩn cấp hàm abandonGame
+                    // [8.2.2] Kích hoạt abandonGame
                     onlineBoardGameViewModel.abandonGame(currentUserId, roomOnline);
                 })
                 .setNegativeButton("Ở lại", (dialog, which) -> dialog.dismiss())
@@ -143,13 +154,18 @@ public class OnlineBoardGameFragment extends Fragment {
     }
 
     private void showGameOverDialog(String winnerId) {
+        if (getContext() == null) return;
+
         String title, msg;
         if ("DRAW".equals(winnerId)) {
-            title = "KẾT QUẢ HÒA!"; msg = "Cả hai đều có số điểm bằng nhau!";
+            title = "KẾT QUẢ HÒA!";
+            msg = "Cả hai đều có số điểm bằng nhau!";
         } else if (currentUserId.equals(winnerId)) {
-            title = "CHIẾN THẮNG! 🎉"; msg = "Bạn đã giành chiến thắng!";
+            title = "CHIẾN THẮNG! 🎉";
+            msg = "Bạn đã giành chiến thắng!";
         } else {
-            title = "THUA CUỘC 😢"; msg = "Đối thủ đã giành chiến thắng!";
+            title = "THUA CUỘC 😢";
+            msg = "Đối thủ đã giành chiến thắng!";
         }
 
         new AlertDialog.Builder(requireContext())
@@ -157,7 +173,14 @@ public class OnlineBoardGameFragment extends Fragment {
                 .setPositiveButton("Quay về Lobby", (dialog, which) -> {
                     requireActivity().getSupportFragmentManager().popBackStack();
                 })
-                .setCancelable(false).show();
+                .setNegativeButton("Màn hình chính", (dialog, which) -> {
+                    android.content.Intent intent = new android.content.Intent(requireActivity(), MainActivity.class);
+                    intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
+                    requireActivity().finish();
+                })
+                .setCancelable(false)
+                .show();
     }
 
     private void showNetworkErrorDialog() {
@@ -166,5 +189,11 @@ public class OnlineBoardGameFragment extends Fragment {
                 .setMessage("Lỗi kết nối đồng bộ kết quả. Hệ thống đã lưu trữ tạm thời và sẽ tự động cập nhật lại khi mạng ổn định.")
                 .setPositiveButton("Đã hiểu", (dialog, which) -> dialog.dismiss())
                 .show();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        binding = null;
     }
 }

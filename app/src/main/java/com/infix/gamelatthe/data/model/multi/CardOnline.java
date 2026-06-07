@@ -3,7 +3,6 @@ package com.infix.gamelatthe.data.model.multi;
 import com.infix.gamelatthe.data.model.Card;
 
 public class CardOnline extends Card {
-
     private boolean isMatched;
 
     public CardOnline(){}
@@ -13,8 +12,19 @@ public class CardOnline extends Card {
         this.isMatched = false;
     }
 
-    public boolean isMatched() { return isMatched; }
+    public boolean isMatched() {
+        return isMatched;
+    }
 
+    public void setMatched(boolean matched) {
+        isMatched = matched;
+    }
 
-    public void setMatched(boolean matched) { isMatched = matched; }
+    @Override
+    public String toString() {
+        return "CardOnline{" +
+                super.toString() +" =>" +
+                "isMatched=" + isMatched +
+                '}';
+    }
 }

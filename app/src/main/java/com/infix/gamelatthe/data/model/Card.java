@@ -7,7 +7,6 @@ public class Card {
     protected int groupId;
     protected String urlImage;
     protected boolean isFlipped;
-
     protected boolean isEnable;
 
     public Card() {}
@@ -18,6 +17,17 @@ public class Card {
         this.urlImage = urlImage;
         this.isFlipped = isFlipped;
         isEnable = true;
+    }
+
+    @Override
+    public String toString() {
+        return "Card{" +
+                "id=" + id +
+                ", groupId=" + groupId +
+                ", urlImage='" + urlImage + '\'' +
+                ", isFlipped=" + isFlipped +
+                ", isEnable=" + isEnable +
+                '}';
     }
 
     public int getId() {
@@ -32,24 +42,33 @@ public class Card {
         return urlImage;
     }
 
+    public boolean isFlipped() {
+        return isFlipped;
+    }
 
+    public void setId(int id) {
+        this.id = id;
+    }
 
+    public void setGroupId(int groupId) {
+        this.groupId = groupId;
+    }
 
-   public boolean isFlipped() {
-       return isFlipped;
-  }
+    public void setUrlImage(String urlImage) {
+        this.urlImage = urlImage;
+    }
 
-  public boolean isEnable() {
-     return isEnable;
-   }
+    public boolean isEnable() {
+        return isEnable;
+    }
 
     public void setFlipped(boolean flipped) {
-       isFlipped = flipped;
-   }
+        isFlipped = flipped;
+    }
 
-   public void setEnable(boolean enable) {
+    public void setEnable(boolean enable) {
         isEnable = enable;
-  }
+    }
 
     @Override
     public boolean equals(Object o) {
