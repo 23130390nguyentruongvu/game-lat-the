@@ -1,5 +1,7 @@
 package com.infix.gamelatthe.ui.view.history_screen;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +18,7 @@ import com.infix.gamelatthe.common.DifficultyEnum;
 import com.infix.gamelatthe.data.source.local.MyDatabase;
 import com.infix.gamelatthe.data.source.local.PlayHistoryDao;
 import com.infix.gamelatthe.databinding.FragmentHistoryBinding;
+import com.infix.gamelatthe.ui.view.MainActivity;
 import com.infix.gamelatthe.ui.viewmodel.HistoryViewModel;
 
 public class HistoryFragment extends Fragment {
@@ -36,18 +39,20 @@ public class HistoryFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         setupRecyclerView();
-
         setupViewModel();
-
         observeData();
-
         setupClickListeners();
 
-        viewModel.loadMatchHistory();
+        // [10.1.1] Hệ thống lấy UUID đã lưu trong SharedPreferences (Đồng bộ với MainActivity)
+        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences(MainActivity.FILE_INFO_USER, Context.MODE_PRIVATE);
+        String currentUserId = sharedPreferences.getString(MainActivity.KEY_UUID_USER, "");
 
-        viewModel.matchHistory.observe(getViewLifecycleOwner(), list -> {
-            adapter.updateList(list);
-        });
+        // [10.1.2] Gửi yêu cầu lấy lịch sử thi đấu của người chơi theo UUID.
+        if (!currentUserId.isEmpty()) {
+            viewModel.loadMatchHistory(currentUserId);
+        } else {
+            Toast.makeText(requireContext(), "Không tìm thấy mã định danh người chơi!", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void setupRecyclerView() {
@@ -57,63 +62,48 @@ public class HistoryFragment extends Fragment {
     }
 
     private void setupViewModel() {
-        // Khởi tạo ViewModel
         viewModel = new ViewModelProvider(this).get(HistoryViewModel.class);
-
         PlayHistoryDao dao = MyDatabase.getInstance(requireContext()).playHistoryDao();
         viewModel.setDao(dao);
     }
 
     private void observeData() {
-        viewModel.matchHistory.observe(getViewLifecycleOwner(), playHistories -> {
-            // 5.1.9 ViewModel trả về danh sách top 10 cho View (Thông qua playHistories)
-            if (playHistories != null) {
-                // 5.1.10 View hiển thị danh sách top 10 lên màn hình
-                adapter.updateList(playHistories);
+        viewModel.matchHistory.observe(getViewLifecycleOwner(), list -> {
+            // [10.1.6] Hiển thị danh sách lịch sử thi đấu trực tuyến (UC10)
+            if (list != null) {
+                adapter.updateList(list);
             }
         });
 
         viewModel._uiState.observe(getViewLifecycleOwner(), state -> {
+            if (state == null) return;
             switch (state) {
                 case SUCCESS:
                     binding.layoutLeaderboard.setVisibility(View.VISIBLE);
                     break;
                 case EMPTY:
-                    // 5.2.3 View nhận được thông báo và cập nhật giao diện (Báo chưa có dữ liệu)
                     binding.layoutLeaderboard.setVisibility(View.GONE);
-                    Toast.makeText(requireContext(), "Chưa có kỷ lục nào cho chế độ này!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(requireContext(), "Chưa có kỷ lục nào!", Toast.LENGTH_SHORT).show();
                     break;
                 case ERROR:
-                    // 5.3.3 View nhận được thông báo và hiển thị Toast báo lỗi
                     binding.layoutLeaderboard.setVisibility(View.GONE);
                     break;
-                case LOADING:
+                default:
                     break;
             }
         });
 
         viewModel._errorMessage.observe(getViewLifecycleOwner(), errorMsg -> {
             if (errorMsg != null && !errorMsg.isEmpty()) {
-                Toast.makeText(requireContext(), "Lỗi: " + errorMsg, Toast.LENGTH_LONG).show();
+                Toast.makeText(requireContext(), errorMsg, Toast.LENGTH_LONG).show();
             }
         });
     }
-    //  5.1.5 View hiển thị ô chọn cấp độ chơi (3 nút EASY, NORMAL, HARD đã có sẵn trên XML)
+
     private void setupClickListeners() {
-        // 5.1.6 Người chơi chọn vào cấp độ muốn xem (Ví dụ: Chọn chế độ EASY)
-        binding.btnEasy.setOnClickListener(v -> {
-            // 5.1.7 View gửi sự kiện tới ViewModel yêu cầu lấy top 10 theo cấp độ đã chọn
-            viewModel.getTop10(DifficultyEnum.EASY.name());
-        });
-
-        binding.btnNormal.setOnClickListener(v -> {
-            viewModel.getTop10(DifficultyEnum.NORMAL.name());
-        });
-
-        binding.btnHard.setOnClickListener(v -> {
-            viewModel.getTop10(DifficultyEnum.HARD.name());
-        });
-        // tương tự cho chế độ NORMAL, HARD
+        binding.btnEasy.setOnClickListener(v -> viewModel.getTop10(DifficultyEnum.EASY.name()));
+        binding.btnNormal.setOnClickListener(v -> viewModel.getTop10(DifficultyEnum.NORMAL.name()));
+        binding.btnHard.setOnClickListener(v -> viewModel.getTop10(DifficultyEnum.HARD.name()));
     }
 
     @Override
