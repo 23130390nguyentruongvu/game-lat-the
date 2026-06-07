@@ -114,6 +114,7 @@ public class RemoteDataSource {
 
     public void startListeningToRoomByCode(String roomCode, RoomSnapshotCallback callback) {
         stopListening();
+        // [7.1.3] Trình lắng nghe (addSnapshotListener) nhận sự kiện thay đổi từ Firestore để đồng bộ trạng thái lật thẻ cho cả 2 máy.
         roomListenerRegistration = db.collection("rooms").whereEqualTo("roomCode", roomCode)
                 .addSnapshotListener((snapshot, error) -> {
                     if (error != null) {
@@ -204,6 +205,8 @@ public class RemoteDataSource {
     }
 
     private RoomOnline parseRoomOnlineManual(DocumentSnapshot document) {
+        // Cơ chế hỗ trợ [7.1.3]: Ép kiểu thủ công để tránh lỗi ClassCastException của Firebase
+        // và bảo toàn chính xác các trường isFlipped, isMatched của CardOnline khi nhận dữ liệu.
         try {
             RoomOnline room = new RoomOnline();
             room.setRoomId(document.getId());
