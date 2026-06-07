@@ -7,6 +7,7 @@ public class Card {
     protected int groupId;
     protected String urlImage;
     protected boolean isFlipped;
+
     protected boolean isEnable;
 
     public Card() {}
@@ -31,21 +32,24 @@ public class Card {
         return urlImage;
     }
 
-    public boolean isFlipped() {
-        return isFlipped;
-    }
 
-    public boolean isEnable() {
-        return isEnable;
-    }
+
+
+   public boolean isFlipped() {
+       return isFlipped;
+  }
+
+  public boolean isEnable() {
+     return isEnable;
+   }
 
     public void setFlipped(boolean flipped) {
-        isFlipped = flipped;
-    }
+       isFlipped = flipped;
+   }
 
-    public void setEnable(boolean enable) {
+   public void setEnable(boolean enable) {
         isEnable = enable;
-    }
+  }
 
     @Override
     public boolean equals(Object o) {
