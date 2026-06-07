@@ -33,6 +33,7 @@ public class GameRepository {
         remoteDataSource.enterRoomOnline(playerOnline, roomCode, roomOnlineListener);
     }
 
+    // [7.1.3] Repository chuyển tiếp yêu cầu đăng ký lắng nghe sự kiện đồng bộ từ Firestore.
     public void startListeningToRoomByCode(String roomCode, RoomSnapshotCallback roomSnapshotCallback) {
         remoteDataSource.startListeningToRoomByCode(roomCode, roomSnapshotCallback);
     }
@@ -48,9 +49,12 @@ public class GameRepository {
     public void startGameOnline(String roomCode, RoomOnlineListener roomOnlineListener) {
         remoteDataSource.startGameOnline(roomCode, roomOnlineListener);
     }
+
+    // [7.1.2], [7.1.4], [7.1.6], [7.2.3], [7.2.4] Repository chuyển tiếp lệnh cập nhật bảng trạng thái và lượt chơi (Atomic Update) lên DataSource.
     public void updateBoardAndTurn(RoomOnline roomOnline) {
         gamePlayOnlineDataSource.updateBoardAndTurn(roomOnline);
     }
+
     private final GamePlayOnlineDataSource gamePlayDataSource = new GamePlayOnlineDataSource();
 
     public void endRoomOnline(String roomId, String finalStatus, String winnerId, RoomOnlineListener listener) {

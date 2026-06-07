@@ -12,12 +12,14 @@ import java.util.Map;
 public class GamePlayOnlineDataSource {
     private final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+    // [7.1.2], [7.1.4], [7.1.6], [7.2.3], [7.2.4] Hệ thống đẩy lệnh cập nhật lên Firestore (cập nhật trạng thái thẻ isFlipped/isMatched và currentTurn).
     public void updateBoardAndTurn(RoomOnline roomOnline) {
         if (roomOnline == null || roomOnline.getRoomId() == null || roomOnline.getBoardGame() == null) return;
 
         try {
             List<Map<String, Object>> cardsMapList = new ArrayList<>();
 
+            // Chuyển đổi thủ công mảng Card sang Map để bảo toàn thuộc tính isMatched khi đẩy lên mảng boardState của Firestore
             for (com.infix.gamelatthe.data.model.Card cardAbstract : roomOnline.getBoardGame().getCards()) {
                 Map<String, Object> cardMap = new HashMap<>();
                 cardMap.put("id", cardAbstract.getId());
@@ -41,12 +43,14 @@ public class GamePlayOnlineDataSource {
             updates.put("winnerId", roomOnline.getWinnerId());
             updates.put("boardGame.cards", cardsMapList);
 
+            // [7.1.6] Hệ thống đẩy lệnh Atomic Update lên Firestore thực hiện đồng thời việc cập nhật thẻ và cộng điểm (hoặc đổi lượt).
             db.collection("rooms")
                     .document(roomOnline.getRoomId())
                     .update(updates)
                     .addOnSuccessListener(aVoid -> {
                     })
                     .addOnFailureListener(e -> {
+                        // Ngoại lệ: Lỗi kết nối đồng bộ Firebase (Ghi log ẩn thay vì hiển thị Toast chặn UI)
                         e.printStackTrace();
                     });
 
@@ -69,7 +73,7 @@ public class GamePlayOnlineDataSource {
                 });
     }
 
-     // UC-9
+    // UC-9
     public void updateMatchHistory(
             RoomOnline roomOnline,
             RoomOnlineListener listener

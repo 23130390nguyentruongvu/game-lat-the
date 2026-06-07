@@ -69,6 +69,9 @@ public class OnlineBoardGameFragment extends Fragment {
 
         onlineBoardGameViewModel = new ViewModelProvider(this).get(OnlineBoardGameViewModel.class);
 
+        // Cung cấp ID cho ViewModel để xử lý lưu lịch sử trận đấu an toàn
+        onlineBoardGameViewModel.setCurrentUserId(currentUserId);
+
         setupRecyclerView();
         observeRoomData();
 
@@ -81,16 +84,16 @@ public class OnlineBoardGameFragment extends Fragment {
             if (isGameOver) return;
             if (roomOnline == null) return;
 
-            // [7.1.1] Kiểm tra lượt đi
+            // Alternative Flow 2 <Thao tác sai lượt> (Rẽ nhánh từ Bước 7.1.1)
             if (roomOnline.getCurrentTurn() != null && !roomOnline.getCurrentTurn().equals(currentUserId)) {
-                // [7.3.3] Thông báo sai lượt
+                // [7.3.2] Hệ thống chặn thao tác vật lý, từ chối gửi Request lên máy chủ.
+                // [7.3.3] Hệ thống hiển thị Toast cảnh báo lên màn hình: "Chưa tới lượt của bạn!".
                 Toast.makeText(requireContext(), "Chưa tới lượt của bạn!", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // [7.1.0] Người chơi chạm vào thẻ
+            // [7.1.0] Người chơi chạm vào một thẻ đang úp trên giao diện bàn cờ.
             if (card instanceof CardOnline) {
-                // [8.1.0] Kích hoạt logic lật thẻ
                 onlineBoardGameViewModel.onCardClick((CardOnline) card, roomOnline, currentUserId);
             } else {
                 Log.e("OnlineBoardGameFragment", "Lỗi dữ liệu: Thẻ không phải CardOnline");
@@ -114,7 +117,7 @@ public class OnlineBoardGameFragment extends Fragment {
             if (room != null && room.getBoardGame() != null) {
                 this.roomOnline = room;
 
-                // [7.1.3] Cập nhật giao diện đồng bộ theo Firestore
+                // [7.1.3] Trình lắng nghe (addSnapshotListener) gắn tại UI nhận sự kiện, đồng bộ hoạt họa lật ngửa thẻ cho cả 2 máy.
                 boardGameAdapter.updateCards(room.getBoardGame().getCards());
 
                 // [8.1.9] Kiểm tra kết thúc từ Snapshot
